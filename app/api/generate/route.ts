@@ -1,0 +1,94 @@
+import { NextResponse } from "next/server";
+import OpenAI from "openai";
+import { createClient } from "../../../lib/supabase/server";
+
+export async function POST(req: Request) {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { data: brandProfile, error: brandError } = await supabase
+      .from("brand_profiles")
+      .select("*")
+      .eq("user_id", user.id)
+      .single();
+
+    if (brandError || !brandProfile) {
+      return NextResponse.json({ error: "Brand profile not found" }, { status: 404 });
+    }
+
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json({ error: "Missing OPENAI_API_KEY" }, { status: 500 });
+    }
+
+    const body = await req.json();
+    const {
+      platform = "Instagram",
+      type = "Sales post",
+      topic = "",
+      includeHashtags = true, // ✅ pobieramy z body
+    } = body;
+
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+    const prompt = `
+You are a world-class social media copywriter for ${brandProfile.company}.
+
+Brand context:
+- Industry: ${brandProfile.industry}
+- Tone of voice: ${brandProfile.tone}
+- Offer: ${brandProfile.offer}
+- Target audience: ${brandProfile.audience}
+
+Task: Write a ${type} post for ${platform}.
+Topic: ${topic || "general brand promotion"}
+
+Rules:
+- NEVER start with "Are you..." or generic hooks
+- Use a surprising, specific, or emotional opening line
+- Make it feel written by a human, not AI
+- Vary sentence length — mix short punchy lines with longer ones
+- Platform style: ${
+  platform === "Instagram" ? "visual, emotional, storytelling, emojis allowed" :
+  platform === "LinkedIn" ? "professional but personal, insight-driven, no emojis" :
+  "conversational, community-focused, relatable"
+}
+- Post type style: ${
+  type === "Sales post" ? "create desire, show transformation, strong CTA" :
+  type === "Educational" ? "teach one specific thing, give real value, end with insight" :
+  "tell a real story with a beginning, tension, and resolution"
+}
+
+Structure:
+1. Hook — first line must stop the scroll
+2. Body — deliver the promise of the hook
+3. CTA — one clear action
+${includeHashtags ? "4. Hashtags — 5 relevant hashtags" : "No hashtags."}
+
+Write only the post text. No explanations.
+`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.9, // ✅ bardziej kreatywny
+    });
+
+    const output = response.choices?.[0]?.message?.content ?? "No response from model.";
+
+    return NextResponse.json({ output });
+  } catch (error) {
+    console.error("API /generate error:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Generation failed" },
+      { status: 500 }
+    );
+  }
+}
