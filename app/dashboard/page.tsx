@@ -1085,7 +1085,7 @@ const handleSignOut = async () => {
 
 function StatCard({ title, value }: { title: string; value: string }) {
   return (
-    <div className="rounded-[26px] border border-white/70 bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+    <div className="rounded-[26px] border border-white/70 bg-white p-4 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
       <p className="text-sm text-slate-400">{title}</p>
       <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-900">{value}</p>
     </div>
