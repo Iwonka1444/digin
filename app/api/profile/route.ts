@@ -13,18 +13,15 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data, error } = await supabase
-    .from("brand_profiles")
-    .select("*")
-    .eq("user_id", user.id)
-    .single();
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json({ data });
+ const { data, error } = await supabase
+  .from("brand_profiles")
+  .select("*")
+  .eq("user_id", user.id)
+  .maybeSingle();
+if (error) {
+  return NextResponse.json({ error: error.message }, { status: 500 });
 }
+return NextResponse.json({ data });
 
 export async function PATCH(req: Request) {
   const supabase = await createClient();
