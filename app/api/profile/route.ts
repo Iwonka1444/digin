@@ -41,18 +41,18 @@ export async function PATCH(req: Request) {
   const body = await req.json();
   const { company, industry, tone, offer, audience } = body;
 
-  const { data, error } = await supabase
-    .from("brand_profiles")
-    .update({
-      company,
-      industry,
-      tone,
-      offer,
-      audience,
-    })
-    .eq("user_id", user.id)
-    .select()
-    .single();
+const { data, error } = await supabase
+  .from("brand_profiles")
+  .upsert({
+    user_id: user.id,
+    company,
+    industry,
+    tone,
+    offer,
+    audience,
+  }, { onConflict: "user_id" })
+  .select()
+  .single();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
