@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { openai } from "../../../lib/openai";
+import OpenAI from "openai";
 import { createClient } from "../../../lib/supabase/server";
 
 export async function POST(req: Request) {
@@ -34,18 +34,17 @@ export async function POST(req: Request) {
       length = "medium",
     } = body;
 
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
     const prompt = `
 You are a world-class social media copywriter for ${brandProfile.company}.
-
 Brand context:
 - Industry: ${brandProfile.industry}
 - Tone of voice: ${brandProfile.tone}
 - Offer: ${brandProfile.offer}
 - Target audience: ${brandProfile.audience}
-
 Task: Write a ${type} post for ${platform}.
 Topic: ${topic || "general brand promotion"}
-
 Rules:
 - NEVER start with "Are you..." or generic hooks
 - Use a surprising, specific, or emotional opening line
@@ -61,29 +60,29 @@ Rules:
   type === "Educational" ? "teach one specific thing, give real value, end with insight" :
   "tell a real story with a beginning, tension, and resolution"
 }
-
 Tone: ${tone === "default" ? "use the brand tone of voice" : tone}
 Length: ${
   length === "short" ? "maximum 3 lines, punchy and direct" :
   length === "long" ? "7-10 lines, detailed and rich" :
   "4-6 lines, balanced"
 }
-
 Structure:
 1. Hook — first line must stop the scroll
 2. Body — deliver the promise of the hook
 3. CTA — one clear action
 ${includeHashtags ? "4. Hashtags — 5 relevant hashtags" : "No hashtags."}
-
 Write only the post text. No explanations.
 `;
 
-    const response = await openai.responses.create({
+    const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      input: prompt,
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.9,
     });
 
-    return NextResponse.json({ output: response.output_text });
+    const output = response.choices?.[0]?.message?.content ?? "No response from model.";
+
+    return NextResponse.json({ output });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Generation failed" }, { status: 500 });
