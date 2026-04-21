@@ -410,7 +410,7 @@ const handleSignOut = async () => {
     </aside>
   </div>
 )}
-          <div className="mb-8 flex flex-col gap-4 rounded-[28px] border border-white/60 bg-white/70 p-5 <div className="hidden lg:flex mb-8 flex-col gap-4 rounded-[28px] border border-white/60 bg-white/70 p-5 shadow-[0_10px_40px_rgba(15,23,42,0.06)] backdrop-blur-xl md:flex-row md:items-center md:justify-between">
+          <div className="hidden lg:flex mb-8 flex-col gap-4 rounded-[28px] border border-white/60 bg-white/70 p-5 <div className="hidden lg:flex mb-8 flex-col gap-4 rounded-[28px] border border-white/60 bg-white/70 p-5 shadow-[0_10px_40px_rgba(15,23,42,0.06)] backdrop-blur-xl md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Workspace</p>
               <h2 className="mt-2 text-2xl font-semibold tracking-tight">{getViewTitle(view)}</h2>
@@ -436,7 +436,7 @@ const handleSignOut = async () => {
 
           {view === "dashboard" && (
             <div className="space-y-8">
-              <section className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+              <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
                 <StatCard title="Posts ready" value={String(stats.postsReady)} />
                 <StatCard title="Drafts" value={String(stats.drafts)} />
                 <StatCard title="Ideas" value={String(stats.ideas)} />
