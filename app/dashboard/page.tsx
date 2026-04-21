@@ -36,6 +36,7 @@ const NAV_ITEMS: { id: ViewType; label: string; hint: string }[] = [
 
 export default function DashboardPage() {
   const [view, setView] = useState<ViewType>("dashboard");
+const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [brandProfile, setBrandProfile] = useState<BrandProfile | null>(null);
   const [generatedPost, setGeneratedPost] = useState("");
@@ -316,7 +317,7 @@ const handleSignOut = async () => {
   return (
     <div className="min-h-screen bg-[#f6f3ee] text-slate-900">
       <div className="flex min-h-screen">
-        <aside className="w-[290px] border-r border-black/5 bg-white/80 px-5 py-6 backdrop-blur-xl">
+        <aside className="hidden lg:flex w-[290px] flex-col border-r border-black/5 bg-white/80 px-5 py-6 backdrop-blur-xl">
           <div className="mb-8">
             <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-black text-white shadow-sm">
               D
@@ -371,7 +372,44 @@ const handleSignOut = async () => {
           </div>
         </aside>
 
-        <main className="flex-1 p-6 md:p-8">
+        <main className="flex-1 min-w-0 p-4 md:p-6 lg:p-8">
+{/* Mobile top bar */}
+<div className="lg:hidden mb-4 flex items-center justify-between rounded-2xl border border-white/60 bg-white/70 px-4 py-3 shadow-sm backdrop-blur-xl">
+  <div className="flex items-center gap-3">
+    <button onClick={() => setSidebarOpen(true)} className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700">☰</button>
+    <span className="text-sm font-semibold">{getViewTitle(view)}</span>
+  </div>
+  <button onClick={() => setView("generator")} className="rounded-xl bg-black px-3 py-2 text-xs font-medium text-white">+ New post</button>
+</div>
+
+{/* Mobile sidebar overlay */}
+{sidebarOpen && (
+  <div className="lg:hidden fixed inset-0 z-50 flex">
+    <div className="fixed inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
+    <aside className="relative z-10 w-[290px] bg-white px-5 py-6 overflow-y-auto">
+      <button onClick={() => setSidebarOpen(false)} className="absolute top-4 right-4 rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-500">✕</button>
+      <div className="mb-8">
+        <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-black text-white shadow-sm">D</div>
+        <div className="mt-4">
+          <h1 className="text-[22px] font-semibold tracking-tight">DiGin</h1>
+          <p className="text-sm text-slate-500">AI Content Operating System</p>
+        </div>
+      </div>
+      <nav className="space-y-2">
+        {NAV_ITEMS.map((item) => {
+          const active = view === item.id;
+          return (
+            <button key={item.id} onClick={() => { setView(item.id); setSidebarOpen(false); }} className={`w-full rounded-2xl border px-4 py-3 text-left transition ${active ? "border-black bg-black text-white shadow-sm" : "border-transparent bg-transparent hover:border-slate-200 hover:bg-slate-50"}`}>
+              <div className="text-sm font-medium">{item.label}</div>
+              <div className={`mt-1 text-xs ${active ? "text-white/70" : "text-slate-400"}`}>{item.hint}</div>
+            </button>
+          );
+        })}
+      </nav>
+      <button onClick={handleSignOut} className="mt-4 w-full rounded-2xl border border-slate-200 px-4 py-3 text-left text-sm font-medium text-slate-500 hover:bg-slate-50 transition">Sign out</button>
+    </aside>
+  </div>
+)}
           <div className="mb-8 flex flex-col gap-4 rounded-[28px] border border-white/60 bg-white/70 p-5 shadow-[0_10px_40px_rgba(15,23,42,0.06)] backdrop-blur-xl md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Workspace</p>
