@@ -3,7 +3,6 @@ import { createClient } from "../../../lib/supabase/server";
 
 export async function GET() {
   const supabase = await createClient();
-
   const {
     data: { user },
     error: userError,
@@ -13,19 +12,21 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
- const { data, error } = await supabase
-  .from("brand_profiles")
-  .select("*")
-  .eq("user_id", user.id)
-  .maybeSingle();
-if (error) {
-  return NextResponse.json({ error: error.message }, { status: 500 });
+  const { data, error } = await supabase
+    .from("brand_profiles")
+    .select("*")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ data });
 }
-return NextResponse.json({ data });
 
 export async function PATCH(req: Request) {
   const supabase = await createClient();
-
   const {
     data: { user },
     error: userError,
@@ -38,18 +39,18 @@ export async function PATCH(req: Request) {
   const body = await req.json();
   const { company, industry, tone, offer, audience } = body;
 
-const { data, error } = await supabase
-  .from("brand_profiles")
-  .upsert({
-    user_id: user.id,
-    company,
-    industry,
-    tone,
-    offer,
-    audience,
-  }, { onConflict: "user_id" })
-  .select()
-  .single();
+  const { data, error } = await supabase
+    .from("brand_profiles")
+    .upsert({
+      user_id: user.id,
+      company,
+      industry,
+      tone,
+      offer,
+      audience,
+    }, { onConflict: "user_id" })
+    .select()
+    .single();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
