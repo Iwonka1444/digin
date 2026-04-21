@@ -49,8 +49,8 @@ export async function PATCH(req: Request) {
       offer,
       audience,
     }, { onConflict: "user_id" })
-    .select()
-    .single();
+  .select()
+.maybeSingle();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
