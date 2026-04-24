@@ -16,6 +16,7 @@ type GeneratedPost = {
   content: string;
   created_at: string;
   scheduled_for?: string | null;
+  media_url?: string | null;
 };
 
 type ViewType = "dashboard" | "generator" | "calendar" | "engagement" | "drafts";
@@ -103,6 +104,10 @@ export default function DashboardPage() {
   const [length, setLength] = useState("medium");
   const [scheduledDate, setScheduledDate] = useState(() => toDateTimeLocalString(new Date()));
 
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaUrl, setMediaUrl] = useState<string>("");
+  const [uploadingMedia, setUploadingMedia] = useState(false);
+
   const [engagementPost, setEngagementPost] = useState("");
   const [engagementContext, setEngagementContext] = useState("");
   const [engagementComments, setEngagementComments] = useState<string[]>([]);
@@ -125,12 +130,12 @@ export default function DashboardPage() {
       let json: any = null;
       if (contentType.includes("application/json")) json = await res.json();
       else { setProfileError("Profile endpoint error."); return; }
-     if (!res.ok) { setProfileError(json.error || "Failed to load profile."); return; }
-if (!json.data) {
-  window.location.href = "/onboarding";
-  return;
-}
-setBrandProfile(json.data);
+      if (!res.ok) { setProfileError(json.error || "Failed to load profile."); return; }
+      if (!json.data) {
+        window.location.href = "/onboarding";
+        return;
+      }
+      setBrandProfile(json.data);
     } catch { setProfileError("Connection error."); }
     finally { setLoadingProfile(false); }
   }
@@ -179,11 +184,31 @@ setBrandProfile(json.data);
       setSavingToCalendar(true);
       setGenerateError("");
       setSaveMessage("");
+
+      let finalMediaUrl = mediaUrl;
+      if (mediaFile) {
+        setUploadingMedia(true);
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        const fileName = `${Date.now()}-${mediaFile.name}`;
+        const { data, error } = await supabase.storage
+          .from("post-media")
+          .upload(fileName, mediaFile);
+        if (!error && data) {
+          const { data: urlData } = supabase.storage
+            .from("post-media")
+            .getPublicUrl(data.path);
+          finalMediaUrl = urlData.publicUrl;
+          setMediaUrl(finalMediaUrl);
+        }
+        setUploadingMedia(false);
+      }
+
       const scheduledForISO = new Date(scheduledDate).toISOString();
       const res = await fetch("/api/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: generatedPost, scheduled_for: scheduledForISO }),
+        body: JSON.stringify({ content: generatedPost, scheduled_for: scheduledForISO, media_url: finalMediaUrl }),
       });
       const json = await res.json();
       if (!res.ok) { setGenerateError(json.error || "Failed to save."); return; }
@@ -335,10 +360,10 @@ setBrandProfile(json.data);
               onClick={() => setView(item.id)}
               className="flex flex-col items-center gap-0.5 px-3 py-1"
             >
-          <span className="text-2xl">{item.icon}</span>
-<span className={`text-xs font-medium ${active ? "text-emerald-600" : "text-slate-400"}`}>
-  {item.label}
-</span>
+              <span className="text-2xl">{item.icon}</span>
+              <span className={`text-xs font-medium ${active ? "text-emerald-600" : "text-slate-400"}`}>
+                {item.label}
+              </span>
             </button>
           );
         })}
@@ -452,9 +477,9 @@ setBrandProfile(json.data);
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Your growth</p>
-                 <p className="text-base font-semibold text-slate-800 line-clamp-1">
-  {growthLevel.name} {growthLevel.emoji}
-</p>
+                      <p className="text-base font-semibold text-slate-800 line-clamp-1">
+                        {growthLevel.name} {growthLevel.emoji}
+                      </p>
                       <p className="mt-0.5 text-sm text-slate-500">{growthLevel.description}</p>
                       {growthProgress.postsLeft > 0 && (
                         <p className="mt-1 text-sm font-semibold text-emerald-600">
@@ -530,8 +555,12 @@ setBrandProfile(json.data);
                       onClick={() => setView("drafts")}
                       className="w-full flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 text-left hover:border-emerald-200 hover:shadow-sm transition"
                     >
-                      <div className="h-12 w-12 shrink-0 rounded-xl bg-slate-100 flex items-center justify-center text-2xl">
-                        {getPlatformIcon(post)}
+                      <div className="h-12 w-12 shrink-0 rounded-xl bg-slate-100 flex items-center justify-center text-2xl overflow-hidden">
+                        {post.media_url ? (
+                          <img src={post.media_url} alt="media" className="h-full w-full object-cover" />
+                        ) : (
+                          getPlatformIcon(post)
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-slate-800 line-clamp-1">{post.content.split("\n")[0] || "Draft post"}</p>
@@ -711,25 +740,49 @@ setBrandProfile(json.data);
                       <div className="rounded-2xl bg-slate-50 border border-slate-100 p-4 mb-4">
                         <p className="text-xs text-slate-400 uppercase tracking-wider mb-3">Preview</p>
                         <textarea
-  value={generatedPost}
-  onChange={(e) => setGeneratedPost(e.target.value)}
-  className="w-full resize-none rounded-xl bg-transparent text-sm leading-7 text-slate-800 outline-none min-h-[120px]"
-  rows={6}
-/>
+                          value={generatedPost}
+                          onChange={(e) => setGeneratedPost(e.target.value)}
+                          className="w-full resize-none rounded-xl bg-transparent text-sm leading-7 text-slate-800 outline-none min-h-[120px]"
+                          rows={6}
+                        />
                       </div>
                       <div className="rounded-xl border border-slate-100 bg-white p-3 mb-4">
                         <p className="text-xs text-slate-400 uppercase tracking-wider">Publishing slot</p>
                         <p className="mt-1 text-sm font-medium text-slate-700">{scheduledDate ? formatDateTime(scheduledDate) : "No date set"}</p>
                       </div>
+
+                      {/* Media upload */}
+                      <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                        <p className="text-xs font-medium text-slate-600 mb-2">📎 Add media (optional)</p>
+                        {mediaUrl && (
+                          <img src={mediaUrl} alt="preview" className="w-full rounded-lg mb-2 max-h-40 object-cover" />
+                        )}
+                        {mediaFile && !mediaUrl && (
+                          <p className="text-xs text-slate-500 mb-2">📄 {mediaFile.name}</p>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*,video/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setMediaFile(file);
+                              setMediaUrl(URL.createObjectURL(file));
+                            }
+                          }}
+                          className="w-full text-xs text-slate-500 file:mr-2 file:rounded-lg file:border-0 file:bg-emerald-50 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-emerald-700"
+                        />
+                      </div>
+
                       <div className="flex flex-wrap gap-2">
                         <button onClick={() => handleCopy(generatedPost)} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Copy</button>
                         <button onClick={handleGenerate} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Regenerate</button>
                         <button
                           onClick={handleSaveToCalendar}
-                          disabled={savingToCalendar}
+                          disabled={savingToCalendar || uploadingMedia}
                           className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600 disabled:opacity-50"
                         >
-                          {savingToCalendar ? "Saving..." : "Save to calendar"}
+                          {savingToCalendar || uploadingMedia ? "Saving..." : "Save to calendar"}
                         </button>
                       </div>
                     </>
@@ -811,6 +864,9 @@ setBrandProfile(json.data);
                     <div className="space-y-3">
                       {postsForSelectedDate.map((post) => (
                         <div key={post.id} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+                          {post.media_url && (
+                            <img src={post.media_url} alt="media" className="w-full rounded-lg mb-2 max-h-32 object-cover" />
+                          )}
                           <p className="text-sm text-slate-700 line-clamp-3">{post.content}</p>
                           <div className="mt-2 flex gap-2">
                             <button onClick={() => handleCopy(post.content)} className="rounded-lg border border-slate-200 px-2.5 py-1 text-xs text-slate-600 hover:bg-white">Copy</button>
@@ -946,6 +1002,9 @@ setBrandProfile(json.data);
               <div className="space-y-3">
                 {posts.map((post) => (
                   <div key={post.id} className="rounded-2xl border border-slate-100 bg-white p-5">
+                    {post.media_url && (
+                      <img src={post.media_url} alt="media" className="w-full rounded-xl mb-3 max-h-48 object-cover" />
+                    )}
                     <p className="text-sm leading-6 text-slate-800 whitespace-pre-wrap">{post.content}</p>
                     <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-50 pt-3">
                       <div>
