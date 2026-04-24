@@ -331,11 +331,10 @@ export default function DashboardPage() {
               onClick={() => setView(item.id)}
               className="flex flex-col items-center gap-0.5 px-3 py-1"
             >
-              <span className="text-2xl">{item.icon}</span>
-<span className={`text-xs font-medium
-              <span className={`text-[10px] font-medium ${active ? "text-emerald-600" : "text-slate-400"}`}>
-                {item.label}
-              </span>
+          <span className="text-2xl">{item.icon}</span>
+<span className={`text-xs font-medium ${active ? "text-emerald-600" : "text-slate-400"}`}>
+  {item.label}
+</span>
             </button>
           );
         })}
@@ -449,9 +448,9 @@ export default function DashboardPage() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Your growth</p>
-                      <p className="text-base font-semibold text-slate-800 line-clamp-1">
-                        {growthLevel.name} {growthLevel.emoji}
-                      </h3>
+                 <p className="text-base font-semibold text-slate-800 line-clamp-1">
+  {growthLevel.name} {growthLevel.emoji}
+</p>
                       <p className="mt-0.5 text-sm text-slate-500">{growthLevel.description}</p>
                       {growthProgress.postsLeft > 0 && (
                         <p className="mt-1 text-sm font-semibold text-emerald-600">
