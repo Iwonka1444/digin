@@ -4,6 +4,13 @@ import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "../../lib/supabase/client";
 
+const BENEFITS = [
+  { icon: "✨", text: "AI posts in seconds" },
+  { icon: "📅", text: "Plan your whole week" },
+  { icon: "🌱", text: "Watch your brand grow" },
+  { icon: "💬", text: "Engagement on autopilot" },
+];
+
 export default function SignupPage() {
   const supabase = createClient();
 
@@ -18,106 +25,115 @@ export default function SignupPage() {
       setMsg("Please fill in all fields.");
       return;
     }
-
     try {
       setLoading(true);
       setMsg("");
-
       const { error } = await supabase.auth.signUp({ email, password });
-
-      if (error) {
-        setMsg(error.message);
-        return;
-      }
-
+      if (error) { setMsg(error.message); return; }
       setSuccess(true);
-    } catch (error) {
+    } catch {
       setMsg("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
+  if (success) {
+    return (
+      <main className="min-h-screen bg-[#f8faf9] flex items-center justify-center p-6">
+        <div className="w-full max-w-[400px] text-center">
+          <div className="text-6xl mb-4">🌱</div>
+          <h2 className="text-2xl font-bold text-slate-900">You&apos;re almost in!</h2>
+          <p className="mt-3 text-slate-500 text-sm leading-relaxed">
+            We sent a confirmation link to{" "}
+            <span className="font-semibold text-slate-800">{email}</span>.
+            <br />Click it to activate your account and start growing.
+          </p>
+          <Link
+            href="/login"
+            className="mt-6 block w-full rounded-xl bg-emerald-500 py-3.5 text-center text-sm font-semibold text-white hover:bg-emerald-600 transition"
+          >
+            Go to login →
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <main className="min-h-screen bg-[#f6f3ee] flex items-center justify-center p-6">
-      <div className="w-full max-w-[420px]">
+    <main className="min-h-screen bg-[#f8faf9] flex items-center justify-center p-6">
+      <div className="w-full max-w-[400px]">
 
         {/* Logo */}
-        <div className="mb-8 text-center">
-          <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-black text-white shadow-sm text-lg font-semibold">
+        <div className="mb-6 text-center">
+          <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500 text-white text-2xl font-bold shadow-sm">
             D
           </div>
-          <h1 className="mt-4 text-2xl font-semibold tracking-tight text-slate-900">DiGin</h1>
-          <p className="mt-1 text-sm text-slate-500">AI Content Operating System</p>
+          <h1 className="mt-3 text-2xl font-bold text-slate-900">DiGin</h1>
+          <p className="mt-1 text-sm text-slate-500">Your brand. Growing. Every day.</p>
+        </div>
+
+        {/* Benefits strip */}
+        <div className="mb-6 grid grid-cols-2 gap-2">
+          {BENEFITS.map((b) => (
+            <div key={b.text} className="flex items-center gap-2 rounded-xl bg-white border border-slate-100 px-3 py-2.5">
+              <span className="text-base">{b.icon}</span>
+              <span className="text-xs font-medium text-slate-700">{b.text}</span>
+            </div>
+          ))}
         </div>
 
         {/* Card */}
-        <div className="rounded-[28px] border border-white/70 bg-white p-8 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+        <div className="rounded-2xl border border-slate-100 bg-white p-8 shadow-sm">
+          <div className="mb-6">
+            <h2 className="text-xl font-bold text-slate-900">Start for free 🚀</h2>
+            <p className="mt-1 text-sm text-slate-500">No credit card required</p>
+          </div>
 
-          {success ? (
-            <div className="text-center">
-              <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-2xl">
-                ✅
-              </div>
-              <h2 className="mt-4 text-lg font-semibold text-slate-900">Check your email</h2>
-              <p className="mt-2 text-sm text-slate-500">
-                We sent a confirmation link to <span className="font-medium text-slate-700">{email}</span>.
-                Click the link to activate your account.
-              </p>
-              <Link
-                href="/login"
-                className="mt-6 block w-full rounded-2xl bg-black py-3 text-center text-sm font-medium text-white"
-              >
-                Go to login
-              </Link>
+          <label className="mb-1.5 block text-sm font-medium text-slate-700">Email</label>
+          <input
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="mb-4 w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition"
+          />
+
+          <label className="mb-1.5 block text-sm font-medium text-slate-700">Password</label>
+          <input
+            type="password"
+            placeholder="Min. 6 characters"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSignup()}
+            className="mb-6 w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition"
+          />
+
+          <button
+            onClick={handleSignup}
+            disabled={loading}
+            className="w-full rounded-xl bg-emerald-500 py-3.5 text-sm font-semibold text-white hover:bg-emerald-600 transition disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {loading ? "Creating account..." : "Create free account →"}
+          </button>
+
+          {msg && (
+            <div className="mt-4 rounded-xl bg-red-50 border border-red-100 p-3 text-sm text-red-600">
+              {msg}
             </div>
-          ) : (
-            <>
-              <div className="mb-6">
-                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Get started</p>
-                <h2 className="mt-2 text-xl font-semibold tracking-tight text-slate-900">Create your account</h2>
-              </div>
-
-              <label className="mb-2 block text-sm font-medium text-slate-700">Email</label>
-              <input
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mb-4 w-full rounded-2xl border border-slate-200 bg-white p-3 text-sm outline-none transition focus:border-black"
-              />
-
-              <label className="mb-2 block text-sm font-medium text-slate-700">Password</label>
-              <input
-                type="password"
-                placeholder="Min. 6 characters"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSignup()}
-                className="mb-6 w-full rounded-2xl border border-slate-200 bg-white p-3 text-sm outline-none transition focus:border-black"
-              />
-
-              <button
-                onClick={handleSignup}
-                disabled={loading}
-                className="w-full rounded-2xl bg-black py-3 text-sm font-medium text-white transition disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {loading ? "Creating account..." : "Create account"}
-              </button>
-
-              {msg && (
-                <p className="mt-4 text-sm text-red-600">{msg}</p>
-              )}
-
-              <p className="mt-6 text-center text-sm text-slate-500">
-                Already have an account?{" "}
-                <Link href="/login" className="font-medium text-slate-900 hover:underline">
-                  Sign in
-                </Link>
-              </p>
-            </>
           )}
+
+          <p className="mt-6 text-center text-sm text-slate-500">
+            Already have an account?{" "}
+            <Link href="/login" className="font-semibold text-emerald-600 hover:text-emerald-700">
+              Sign in
+            </Link>
+          </p>
         </div>
+
+        <p className="mt-4 text-center text-xs text-slate-400">
+          Join brands already growing with DiGin 🌱
+        </p>
       </div>
     </main>
   );
