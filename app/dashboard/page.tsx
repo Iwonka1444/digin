@@ -710,7 +710,12 @@ setBrandProfile(json.data);
                     <>
                       <div className="rounded-2xl bg-slate-50 border border-slate-100 p-4 mb-4">
                         <p className="text-xs text-slate-400 uppercase tracking-wider mb-3">Preview</p>
-                        <div className="whitespace-pre-wrap text-sm leading-7 text-slate-800">{generatedPost}</div>
+                        <textarea
+  value={generatedPost}
+  onChange={(e) => setGeneratedPost(e.target.value)}
+  className="w-full resize-none rounded-xl bg-transparent text-sm leading-7 text-slate-800 outline-none min-h-[120px]"
+  rows={6}
+/>
                       </div>
                       <div className="rounded-xl border border-slate-100 bg-white p-3 mb-4">
                         <p className="text-xs text-slate-400 uppercase tracking-wider">Publishing slot</p>
