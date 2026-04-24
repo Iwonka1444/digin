@@ -69,7 +69,7 @@ export default function ResetPasswordPage() {
           <div className="mb-6">
             <div className="text-3xl mb-3">🔑</div>
             <h2 className="text-xl font-bold text-slate-900">Forgot your password?</h2>
-            <p className="mt-1 text-sm text-slate-500">No worries — we'll send you a reset link.</p>
+            <p className="mt-1 text-sm text-slate-500">No worries - we'll send you a reset link.</p>
           </div>
 
           <label className="mb-1.5 block text-sm font-medium text-slate-700">Email</label>
