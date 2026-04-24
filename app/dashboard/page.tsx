@@ -125,8 +125,12 @@ export default function DashboardPage() {
       let json: any = null;
       if (contentType.includes("application/json")) json = await res.json();
       else { setProfileError("Profile endpoint error."); return; }
-      if (!res.ok) { setProfileError(json.error || "Failed to load profile."); return; }
-      setBrandProfile(json.data);
+     if (!res.ok) { setProfileError(json.error || "Failed to load profile."); return; }
+if (!json.data) {
+  window.location.href = "/onboarding";
+  return;
+}
+setBrandProfile(json.data);
     } catch { setProfileError("Connection error."); }
     finally { setLoadingProfile(false); }
   }
