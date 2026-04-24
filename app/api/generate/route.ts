@@ -21,7 +21,7 @@ export async function POST(req: Request) {
       .single();
 
     if (brandError || !brandProfile) {
-      return NextResponse.json({ error: "Brand profile not found" }, { status: 404 });
+      return NextResponse.json({ error: "Brand profile not found. Please set up your brand profile first." }, { status: 404 });
     }
 
     if (!process.env.OPENAI_API_KEY) {
@@ -33,52 +33,44 @@ export async function POST(req: Request) {
       platform = "Instagram",
       type = "Sales post",
       topic = "",
-      includeHashtags = true, // ✅ pobieramy z body
+      includeHashtags = true,
+      tone = "default",
+      length = "medium",
     } = body;
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
     const prompt = `
-You are a world-class social media copywriter for ${brandProfile.company}.
+You are a social media copywriter for ${brandProfile.company}.
 
-Brand context:
+BRAND:
 - Industry: ${brandProfile.industry}
-- Tone of voice: ${brandProfile.tone}
 - Offer: ${brandProfile.offer}
 - Target audience: ${brandProfile.audience}
+- Brand tone: ${brandProfile.tone}
 
-Task: Write a ${type} post for ${platform}.
+TASK: Write ONE ${type} post for ${platform}.
 Topic: ${topic || "general brand promotion"}
 
-Rules:
-- NEVER start with "Are you..." or generic hooks
-- Use a surprising, specific, or emotional opening line
-- Make it feel written by a human, not AI
-- Vary sentence length — mix short punchy lines with longer ones
-- Platform style: ${
-  platform === "Instagram" ? "visual, emotional, storytelling, emojis allowed" :
-  platform === "LinkedIn" ? "professional but personal, insight-driven, no emojis" :
-  "conversational, community-focused, relatable"
-}
-- Post type style: ${
-  type === "Sales post" ? "create desire, show transformation, strong CTA" :
-  type === "Educational" ? "teach one specific thing, give real value, end with insight" :
-  "tell a real story with a beginning, tension, and resolution"
-}
+STRICT RULES — follow exactly:
+- Tone: ${tone === "default" ? brandProfile.tone : tone}
+- Length: ${length === "short" ? "MAXIMUM 3 lines total. Be extremely concise. No long paragraphs." : length === "long" ? "7-10 lines. Detailed and rich." : "4-6 lines. Balanced."}
+- Platform style: ${platform === "Instagram" ? "casual, visual, emojis allowed" : platform === "LinkedIn" ? "professional, insight-driven, no emojis" : "friendly, conversational, relatable"}
+- Post type: ${type === "Sales post" ? "create desire, show transformation, strong CTA" : type === "Educational" ? "teach one specific thing, give real value, end with insight" : "tell a real story with beginning, tension, and resolution"}
+- Write in the same language as the brand tone and audience context
+- DO NOT write long paragraphs if length is short — respect the length rule strictly
+- First line must be a scroll-stopping hook
+- End with one clear CTA
+${includeHashtags ? "- Add 5 relevant hashtags at the end" : "- NO hashtags"}
 
-Structure:
-1. Hook — first line must stop the scroll
-2. Body — deliver the promise of the hook
-3. CTA — one clear action
-${includeHashtags ? "4. Hashtags — 5 relevant hashtags" : "No hashtags."}
-
-Write only the post text. No explanations.
+Write ONLY the post text. No explanations. No labels. No intro sentences.
 `;
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
-      temperature: 0.9, // ✅ bardziej kreatywny
+      temperature: 0.85,
+      max_tokens: length === "short" ? 150 : length === "long" ? 600 : 350,
     });
 
     const output = response.choices?.[0]?.message?.content ?? "No response from model.";
