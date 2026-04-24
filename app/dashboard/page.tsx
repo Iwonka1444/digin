@@ -331,7 +331,8 @@ export default function DashboardPage() {
               onClick={() => setView(item.id)}
               className="flex flex-col items-center gap-0.5 px-3 py-1"
             >
-              <span className="text-xl">{item.icon}</span>
+              <span className="text-2xl">{item.icon}</span>
+<span className={`text-xs font-medium
               <span className={`text-[10px] font-medium ${active ? "text-emerald-600" : "text-slate-400"}`}>
                 {item.label}
               </span>
@@ -380,7 +381,7 @@ export default function DashboardPage() {
               {/* Header */}
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-900">
+                  <h2 className="text-3xl font-bold text-slate-900">
                     {greeting}, {userName}! 👋
                   </h2>
                   <p className="text-sm text-slate-500 mt-0.5">Let's grow your brand today.</p>
@@ -434,7 +435,7 @@ export default function DashboardPage() {
                         {item.icon}
                       </div>
                       <div>
-                        <p className="text-xs font-semibold text-slate-800 leading-tight">{item.label}</p>
+                        <p className="text-sm font-semibold text-slate-800 leading-snug">{item.label}</p>
                         <p className="mt-0.5 text-[10px] text-slate-400 leading-tight hidden sm:block">{item.hint}</p>
                       </div>
                     </button>
@@ -448,7 +449,7 @@ export default function DashboardPage() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Your growth</p>
-                      <h3 className="mt-1 text-xl font-bold text-slate-900">
+                      <p className="text-base font-semibold text-slate-800 line-clamp-1">
                         {growthLevel.name} {growthLevel.emoji}
                       </h3>
                       <p className="mt-0.5 text-sm text-slate-500">{growthLevel.description}</p>
