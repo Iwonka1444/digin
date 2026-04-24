@@ -54,11 +54,11 @@ Topic: ${topic || "general brand promotion"}
 
 STRICT RULES — follow exactly:
 - Tone: ${tone === "default" ? brandProfile.tone : tone}
-- Length: ${length === "short" ? "MAXIMUM 3 lines total. Be extremely concise. No long paragraphs." : length === "long" ? "7-10 lines. Detailed and rich." : "4-6 lines. Balanced."}
+- Length: ${length === "short" ? "MAXIMUM 3 lines total. LENGTH IS THE TOP PRIORITY — overrides everything including post type. Write max 3 short lines, no exceptions." : length === "long" ? "7-10 lines. Detailed and rich." : "4-6 lines. Balanced."}
 - Platform style: ${platform === "Instagram" ? "casual, visual, emojis allowed" : platform === "LinkedIn" ? "professional, insight-driven, no emojis" : "friendly, conversational, relatable"}
 - Post type: ${type === "Sales post" ? "create desire, show transformation, strong CTA" : type === "Educational" ? "teach one specific thing, give real value, end with insight" : "tell a real story with beginning, tension, and resolution"}
 - Write in the same language as the brand tone and audience context
-- DO NOT write long paragraphs if length is short — respect the length rule strictly
+- LENGTH RULE IS ABSOLUTE. If length is short, write 3 lines MAX even if post type is storytelling. Adapt the story to fit in 3 lines.
 - First line must be a scroll-stopping hook
 - End with one clear CTA
 ${includeHashtags ? "- Add 5 relevant hashtags at the end" : "- NO hashtags"}
