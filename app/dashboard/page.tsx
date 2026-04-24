@@ -26,17 +26,54 @@ type GeneratorForm = {
   topic: string;
 };
 
-const NAV_ITEMS: { id: ViewType; label: string; hint: string }[] = [
-  { id: "dashboard", label: "Dashboard", hint: "Overview & insights" },
-  { id: "generator", label: "Generator", hint: "Create content" },
-  { id: "calendar", label: "Calendar", hint: "Plan your week" },
-  { id: "engagement", label: "Engagement", hint: "AI comment ideas" },
-  { id: "drafts", label: "Drafts", hint: "Saved content" },
+// Growth system
+const GROWTH_LEVELS = [
+  { level: 1, name: "Seed stage", emoji: "🌱", icon: "🌱", postsNeeded: 2, description: "You're just getting started." },
+  { level: 2, name: "Sprout stage", emoji: "🌿", icon: "🌿", postsNeeded: 5, description: "You're growing steadily!" },
+  { level: 3, name: "Small plant", emoji: "🪴", icon: "🪴", postsNeeded: 10, description: "Looking good, keep going!" },
+  { level: 4, name: "Growing plant", emoji: "🌳", icon: "🌳", postsNeeded: 20, description: "Your brand is thriving!" },
+  { level: 5, name: "Strong plant", emoji: "🌲", icon: "🌲", postsNeeded: 35, description: "You're a content machine!" },
+  { level: 6, name: "Bloom", emoji: "🌸", icon: "🌸", postsNeeded: 50, description: "Full bloom! You've made it!" },
 ];
+
+function getGrowthLevel(totalPosts: number) {
+  for (let i = GROWTH_LEVELS.length - 1; i >= 0; i--) {
+    if (totalPosts >= GROWTH_LEVELS[i].postsNeeded) {
+      return GROWTH_LEVELS[Math.min(i + 1, GROWTH_LEVELS.length - 1)];
+    }
+  }
+  return GROWTH_LEVELS[0];
+}
+
+function getProgressToNext(totalPosts: number) {
+  const currentIdx = GROWTH_LEVELS.findIndex((l, i) => {
+    const next = GROWTH_LEVELS[i + 1];
+    return !next || totalPosts < next.postsNeeded;
+  });
+  const current = GROWTH_LEVELS[Math.max(0, currentIdx)];
+  const next = GROWTH_LEVELS[Math.min(currentIdx + 1, GROWTH_LEVELS.length - 1)];
+  if (current === next) return { progress: 100, postsLeft: 0, nextLevel: current };
+  const progress = Math.round(((totalPosts - current.postsNeeded) / (next.postsNeeded - current.postsNeeded)) * 100);
+  return { progress: Math.max(0, Math.min(100, progress)), postsLeft: next.postsNeeded - totalPosts, nextLevel: next };
+}
+
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
+}
+
+function getPlatformIcon(post: GeneratedPost) {
+  const content = post.content.toLowerCase();
+  if (content.includes("linkedin")) return "💼";
+  if (content.includes("facebook")) return "📘";
+  return "📸";
+}
 
 export default function DashboardPage() {
   const [view, setView] = useState<ViewType>("dashboard");
-const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [brandProfile, setBrandProfile] = useState<BrandProfile | null>(null);
   const [generatedPost, setGeneratedPost] = useState("");
@@ -61,25 +98,23 @@ const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [currentMonth, setCurrentMonth] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
-const [includeHashtags, setIncludeHashtags] = useState(true);
-const [tone, setTone] = useState("default");
-const [length, setLength] = useState("medium");
-  const [scheduledDate, setScheduledDate] = useState(() =>
-    toDateTimeLocalString(new Date())
-  );
+  const [includeHashtags, setIncludeHashtags] = useState(true);
+  const [tone, setTone] = useState("default");
+  const [length, setLength] = useState("medium");
+  const [scheduledDate, setScheduledDate] = useState(() => toDateTimeLocalString(new Date()));
 
-  // ✅ Engagement state
-const handleSignOut = async () => {
-  const { createClient } = await import("@/lib/supabase/client");
-  const supabase = createClient();
-  await supabase.auth.signOut();
-  window.location.href = "/login";
-};
   const [engagementPost, setEngagementPost] = useState("");
   const [engagementContext, setEngagementContext] = useState("");
   const [engagementComments, setEngagementComments] = useState<string[]>([]);
   const [loadingEngagement, setLoadingEngagement] = useState(false);
   const [engagementError, setEngagementError] = useState("");
+
+  const handleSignOut = async () => {
+    const { createClient } = await import("@/lib/supabase/client");
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    window.location.href = "/login";
+  };
 
   async function loadProfile() {
     try {
@@ -88,23 +123,12 @@ const handleSignOut = async () => {
       const res = await fetch("/api/profile", { method: "GET", cache: "no-store" });
       const contentType = res.headers.get("content-type") || "";
       let json: any = null;
-      if (contentType.includes("application/json")) {
-        json = await res.json();
-      } else {
-        setProfileError("Endpoint /api/profile nie zwrócił JSON.");
-        return;
-      }
-      if (!res.ok) {
-        setProfileError(json.error || "Nie udało się pobrać profilu.");
-        return;
-      }
+      if (contentType.includes("application/json")) json = await res.json();
+      else { setProfileError("Profile endpoint error."); return; }
+      if (!res.ok) { setProfileError(json.error || "Failed to load profile."); return; }
       setBrandProfile(json.data);
-    } catch (error) {
-      console.error("Profile fetch error:", error);
-      setProfileError("Błąd połączenia przy pobieraniu profilu.");
-    } finally {
-      setLoadingProfile(false);
-    }
+    } catch { setProfileError("Connection error."); }
+    finally { setLoadingProfile(false); }
   }
 
   async function loadPosts() {
@@ -114,31 +138,15 @@ const handleSignOut = async () => {
       const res = await fetch("/api/posts", { method: "GET", cache: "no-store" });
       const contentType = res.headers.get("content-type") || "";
       let json: any = null;
-      if (contentType.includes("application/json")) {
-        json = await res.json();
-      } else {
-        const text = await res.text();
-        console.error("Non-JSON response from /api/posts:", text);
-        setPostsError("Endpoint /api/posts nie zwrócił JSON.");
-        return;
-      }
-      if (!res.ok) {
-        setPostsError(json.error || "Nie udało się pobrać postów.");
-        return;
-      }
+      if (contentType.includes("application/json")) json = await res.json();
+      else { setPostsError("Posts endpoint error."); return; }
+      if (!res.ok) { setPostsError(json.error || "Failed to load posts."); return; }
       setPosts(json.data || []);
-    } catch (error) {
-      console.error("Posts fetch error:", error);
-      setPostsError("Błąd połączenia przy pobieraniu historii postów.");
-    } finally {
-      setLoadingPosts(false);
-    }
+    } catch { setPostsError("Connection error."); }
+    finally { setLoadingPosts(false); }
   }
 
-  useEffect(() => {
-    loadProfile();
-    loadPosts();
-  }, []);
+  useEffect(() => { loadProfile(); loadPosts(); }, []);
 
   const handleGenerate = async () => {
     try {
@@ -152,43 +160,18 @@ const handleSignOut = async () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...generatorForm, includeHashtags, tone, length }),
       });
-      const contentType = res.headers.get("content-type") || "";
-      let json: any = null;
-      if (contentType.includes("application/json")) {
-        json = await res.json();
-      } else {
-        const text = await res.text();
-        console.error("Non-JSON response from /api/generate:", text);
-        setGenerateError("Endpoint /api/generate nie zwrócił JSON.");
-        return;
-      }
-      if (!res.ok) {
-        setGenerateError(json.error || "Błąd generowania.");
-        return;
-      }
-      if (json.output) {
-        setGeneratedPost(json.output);
-      } else {
-        setGenerateError("Brak wygenerowanego tekstu.");
-      }
-    } catch (error) {
-      console.error("Generate fetch error:", error);
-      setGenerateError("Błąd połączenia z generatorem.");
-    } finally {
-      setLoadingGenerate(false);
-    }
+      const json = await res.json();
+      if (!res.ok) { setGenerateError(json.error || "Generation error."); return; }
+      if (json.output) setGeneratedPost(json.output);
+      else setGenerateError("No output from model.");
+    } catch { setGenerateError("Connection error."); }
+    finally { setLoadingGenerate(false); }
   };
 
   const handleSaveToCalendar = async () => {
     try {
-      if (!generatedPost.trim()) {
-        setGenerateError("Najpierw wygeneruj post.");
-        return;
-      }
-      if (!scheduledDate) {
-        setGenerateError("Ustaw datę i godzinę publikacji.");
-        return;
-      }
+      if (!generatedPost.trim()) { setGenerateError("Generate a post first."); return; }
+      if (!scheduledDate) { setGenerateError("Set a date first."); return; }
       setSavingToCalendar(true);
       setGenerateError("");
       setSaveMessage("");
@@ -198,43 +181,24 @@ const handleSignOut = async () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: generatedPost, scheduled_for: scheduledForISO }),
       });
-      const contentType = res.headers.get("content-type") || "";
-      let json: any = null;
-      if (contentType.includes("application/json")) {
-        json = await res.json();
-      } else {
-        const text = await res.text();
-        console.error("Non-JSON response from POST /api/posts:", text);
-        setGenerateError("Endpoint /api/posts nie zwrócił JSON.");
-        return;
-      }
-      if (!res.ok) {
-        setGenerateError(json.error || "Nie udało się zapisać posta.");
-        return;
-      }
+      const json = await res.json();
+      if (!res.ok) { setGenerateError(json.error || "Failed to save."); return; }
       await loadPosts();
       const savedDate = new Date(scheduledForISO);
       setSelectedDate(savedDate);
       setCurrentMonth(new Date(savedDate.getFullYear(), savedDate.getMonth(), 1));
-      setSaveMessage("Post zapisany do kalendarza ✅");
+      setSaveMessage("Post saved to calendar ✅");
       setView("calendar");
-    } catch (error) {
-      console.error("Save to calendar error:", error);
-      setGenerateError("Błąd przy zapisie do kalendarza.");
-    } finally {
-      setSavingToCalendar(false);
-    }
+    } catch { setGenerateError("Connection error."); }
+    finally { setSavingToCalendar(false); }
   };
 
   const handleCopy = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      setCopyMessage("Skopiowano ✅");
+      setCopyMessage("Copied ✅");
       setTimeout(() => setCopyMessage(""), 2000);
-    } catch (error) {
-      console.error("Copy error:", error);
-      setCopyMessage("Nie udało się skopiować.");
-    }
+    } catch { setCopyMessage("Failed to copy."); }
   };
 
   const handleDelete = async (id: string) => {
@@ -245,17 +209,11 @@ const handleSignOut = async () => {
         body: JSON.stringify({ id }),
       });
       const json = await res.json();
-      if (!res.ok) {
-        console.error("Delete error:", json.error);
-        return;
-      }
+      if (!res.ok) { console.error("Delete error:", json.error); return; }
       await loadPosts();
-    } catch (error) {
-      console.error("Delete fetch error:", error);
-    }
+    } catch { console.error("Delete error"); }
   };
 
-  // ✅ Engagement handler
   const handleGenerateEngagement = async () => {
     try {
       setLoadingEngagement(true);
@@ -264,860 +222,752 @@ const handleSignOut = async () => {
       const res = await fetch("/api/engagement", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          postContent: engagementPost,
-          commentContext: engagementContext,
-        }),
+        body: JSON.stringify({ postContent: engagementPost, commentContext: engagementContext }),
       });
       const json = await res.json();
-      if (!res.ok) {
-        setEngagementError(json.error || "Błąd generowania komentarzy.");
-        return;
-      }
+      if (!res.ok) { setEngagementError(json.error || "Error generating comments."); return; }
       setEngagementComments(json.comments || []);
-    } catch (error) {
-      console.error("Engagement fetch error:", error);
-      setEngagementError("Błąd połączenia.");
-    } finally {
-      setLoadingEngagement(false);
-    }
+    } catch { setEngagementError("Connection error."); }
+    finally { setLoadingEngagement(false); }
   };
 
   const stats = useMemo(() => {
-    const scheduledCount = posts.filter((post) => post.scheduled_for).length;
-    return {
-      postsReady: posts.length,
-      drafts: posts.length,
-      ideas: posts.length + 6,
-      channels: 3,
-      scheduled: scheduledCount,
-    };
+    const scheduledCount = posts.filter((p) => p.scheduled_for).length;
+    return { postsReady: posts.length, drafts: posts.length, scheduled: scheduledCount };
   }, [posts]);
 
   const recentPosts = useMemo(() => posts.slice(0, 3), [posts]);
-
-  const calendarDays = useMemo(() => {
-    return buildCalendarDays(currentMonth);
-  }, [currentMonth]);
-
+  const calendarDays = useMemo(() => buildCalendarDays(currentMonth), [currentMonth]);
   const postsForSelectedDate = useMemo(() => {
     if (!selectedDate) return [];
-    return posts.filter((post) => {
-      if (!post.scheduled_for) return false;
-      const postDate = new Date(post.scheduled_for);
-      return isSameDay(postDate, selectedDate);
-    });
+    return posts.filter((p) => p.scheduled_for && isSameDay(new Date(p.scheduled_for), selectedDate));
   }, [posts, selectedDate]);
 
-  const monthLabel = currentMonth.toLocaleDateString("en-US", {
-    month: "long",
-    year: "numeric",
-  });
+  const monthLabel = currentMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 
-  return (
-    <div className="min-h-screen bg-[#f6f3ee] text-slate-900">
-      <div className="flex min-h-screen">
-        <aside className="hidden lg:flex w-[290px] flex-col border-r border-black/5 bg-white/80 px-5 py-6 backdrop-blur-xl">
-          <div className="mb-8">
-            <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-black text-white shadow-sm">
-              D
-            </div>
-            <div className="mt-4">
-              <h1 className="text-[22px] font-semibold tracking-tight">DiGin</h1>
-              <p className="text-sm text-slate-500">AI Content Operating System</p>
-            </div>
-          </div>
+  const growthLevel = useMemo(() => getGrowthLevel(posts.length), [posts.length]);
+  const growthProgress = useMemo(() => getProgressToNext(posts.length), [posts.length]);
 
-          <nav className="space-y-2">
-            {NAV_ITEMS.map((item) => {
-              const active = view === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setView(item.id)}
-                  className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
-                    active
-                      ? "border-black bg-black text-white shadow-sm"
-                      : "border-transparent bg-transparent hover:border-slate-200 hover:bg-slate-50"
-                  }`}
-                >
-                  <div className="text-sm font-medium">{item.label}</div>
-                  <div className={`mt-1 text-xs ${active ? "text-white/70" : "text-slate-400"}`}>
-                    {item.hint}
-                  </div>
-                </button>
-              );
-            })}
-          </nav>
-<button
-  onClick={handleSignOut}
-  className="mt-4 w-full rounded-2xl border border-slate-200 px-4 py-3 text-left text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition"
->
-  Sign out
-</button>
-          <div className="mt-8 rounded-3xl border border-black/5 bg-[#f7f4ef] p-4">
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Pro mode</p>
-            <h3 className="mt-2 text-sm font-semibold leading-5">
-              Turn one idea into multi-channel content
-            </h3>
-            <p className="mt-2 text-sm text-slate-500">
-              Premium workflow for brand-first content creation.
-            </p>
-            <button
-              onClick={() => setView("generator")}
-              className="mt-4 w-full rounded-2xl bg-black px-4 py-3 text-sm font-medium text-white"
-            >
-              Open generator
-            </button>
-          </div>
-        </aside>
+  const greeting = getGreeting();
+  const userName = brandProfile?.company || "there";
 
-        <main className="flex-1 min-w-0 p-4 md:p-6 lg:p-8">
-{/* Mobile top bar */}
-<div className="lg:hidden mb-4 flex items-center justify-between rounded-2xl border border-white/60 bg-white/70 px-4 py-3 shadow-sm backdrop-blur-xl">
-  <div className="flex items-center gap-3">
-    <button onClick={() => setSidebarOpen(true)} className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700">☰</button>
-    <span className="text-sm font-semibold">{getViewTitle(view)}</span>
-  </div>
-  <button onClick={() => setView("generator")} className="rounded-xl bg-black px-3 py-2 text-xs font-medium text-white">+ New post</button>
-</div>
-
-{/* Mobile sidebar overlay */}
-{sidebarOpen && (
-  <div className="lg:hidden fixed inset-0 z-50 flex">
-    <div className="fixed inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
-    <aside className="relative z-10 w-[290px] bg-white px-5 py-6 overflow-y-auto">
-      <button onClick={() => setSidebarOpen(false)} className="absolute top-4 right-4 rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-500">✕</button>
-      <div className="mb-8">
-        <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-black text-white shadow-sm">D</div>
-        <div className="mt-4">
-          <h1 className="text-[22px] font-semibold tracking-tight">DiGin</h1>
-          <p className="text-sm text-slate-500">AI Content Operating System</p>
+  // ── SIDEBAR CONTENT ──────────────────────────────────────────────
+  const SidebarContent = () => (
+    <>
+      <div className="mb-8 flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500 text-white text-lg font-bold shadow-sm">
+          D
+        </div>
+        <div>
+          <h1 className="text-lg font-bold tracking-tight text-slate-900">DiGin</h1>
+          <p className="text-xs text-slate-400">AI Marketing Assistant</p>
         </div>
       </div>
-      <nav className="space-y-2">
-        {NAV_ITEMS.map((item) => {
+
+      <nav className="space-y-1">
+        {[
+          { id: "dashboard" as ViewType, label: "Home", icon: "🏠" },
+          { id: "generator" as ViewType, label: "Generator", icon: "✨" },
+          { id: "calendar" as ViewType, label: "Calendar", icon: "📅" },
+          { id: "engagement" as ViewType, label: "Engagement", icon: "💬" },
+          { id: "drafts" as ViewType, label: "Drafts", icon: "📝" },
+        ].map((item) => {
           const active = view === item.id;
           return (
-            <button key={item.id} onClick={() => { setView(item.id); setSidebarOpen(false); }} className={`w-full rounded-2xl border px-4 py-3 text-left transition ${active ? "border-black bg-black text-white shadow-sm" : "border-transparent bg-transparent hover:border-slate-200 hover:bg-slate-50"}`}>
-              <div className="text-sm font-medium">{item.label}</div>
-              <div className={`mt-1 text-xs ${active ? "text-white/70" : "text-slate-400"}`}>{item.hint}</div>
+            <button
+              key={item.id}
+              onClick={() => { setView(item.id); setSidebarOpen(false); }}
+              className={`w-full flex items-center gap-3 rounded-2xl px-4 py-3 text-left transition ${
+                active ? "bg-emerald-500 text-white shadow-sm" : "text-slate-600 hover:bg-slate-100"
+              }`}
+            >
+              <span className="text-base">{item.icon}</span>
+              <span className="text-sm font-medium">{item.label}</span>
             </button>
           );
         })}
       </nav>
-      <button onClick={handleSignOut} className="mt-4 w-full rounded-2xl border border-slate-200 px-4 py-3 text-left text-sm font-medium text-slate-500 hover:bg-slate-50 transition">Sign out</button>
-    </aside>
-  </div>
-)}
-        <div className="hidden lg:flex mb-8 flex-col gap-4 rounded-[28px] border border-white/60 bg-white/70 p-5 shadow-[0_10px_40px_rgba(15,23,42,0.06)] backdrop-blur-xl md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Workspace</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-tight">{getViewTitle(view)}</h2>
-              <p className="mt-1 text-sm text-slate-500">
-                Manage your brand voice, generate content and keep drafts organized.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <button
-                onClick={() => setView("generator")}
-                className="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700"
-              >
-                New post
-              </button>
-              <Link
-                href="/edit-brand"
-                className="rounded-2xl bg-black px-4 py-2.5 text-sm font-medium text-white"
-              >
-                Edit brand
-              </Link>
-            </div>
+
+      <div className="mt-6 rounded-2xl bg-emerald-50 border border-emerald-100 p-4">
+        <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Your Growth</p>
+        <div className="mt-2 flex items-center gap-2">
+          <span className="text-2xl">{growthLevel.icon}</span>
+          <div>
+            <p className="text-sm font-semibold text-slate-800">{growthLevel.name}</p>
+            <p className="text-xs text-emerald-600">Level {GROWTH_LEVELS.indexOf(growthLevel) + 1}</p>
           </div>
+        </div>
+        <div className="mt-3 h-1.5 w-full rounded-full bg-emerald-100">
+          <div className="h-1.5 rounded-full bg-emerald-500 transition-all" style={{ width: `${growthProgress.progress}%` }} />
+        </div>
+        <p className="mt-1 text-xs text-slate-500">
+          {growthProgress.postsLeft > 0 ? `${growthProgress.postsLeft} more posts to grow!` : "Max level reached! 🎉"}
+        </p>
+      </div>
 
+      <button
+        onClick={handleSignOut}
+        className="mt-4 w-full flex items-center gap-2 rounded-2xl px-4 py-3 text-sm text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
+      >
+        <span>👋</span> Sign out
+      </button>
+    </>
+  );
+
+  // ── BOTTOM NAV (mobile) ───────────────────────────────────────────
+  const BottomNav = () => (
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-100 px-2 pb-safe">
+      <div className="flex items-center justify-around py-2">
+        {[
+          { id: "dashboard" as ViewType, label: "Home", icon: "🏠" },
+          { id: "calendar" as ViewType, label: "Calendar", icon: "📅" },
+          { id: "drafts" as ViewType, label: "Drafts", icon: "📝" },
+          { id: "engagement" as ViewType, label: "Engage", icon: "💬" },
+        ].map((item) => {
+          const active = view === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => setView(item.id)}
+              className="flex flex-col items-center gap-0.5 px-3 py-1"
+            >
+              <span className="text-xl">{item.icon}</span>
+              <span className={`text-[10px] font-medium ${active ? "text-emerald-600" : "text-slate-400"}`}>
+                {item.label}
+              </span>
+            </button>
+          );
+        })}
+        <button
+          onClick={() => setView("generator")}
+          className="flex flex-col items-center justify-center w-12 h-12 rounded-full bg-emerald-500 text-white shadow-lg -mt-4"
+        >
+          <span className="text-xl">+</span>
+        </button>
+      </div>
+    </nav>
+  );
+
+  return (
+    <div className="min-h-screen bg-[#f8faf9] text-slate-900">
+      <div className="flex min-h-screen">
+
+        {/* Desktop sidebar */}
+        <aside className="hidden lg:flex w-[260px] flex-col border-r border-slate-100 bg-white px-5 py-6">
+          <SidebarContent />
+        </aside>
+
+        {/* Mobile sidebar overlay */}
+        {sidebarOpen && (
+          <div className="lg:hidden fixed inset-0 z-50 flex">
+            <div className="fixed inset-0 bg-black/30" onClick={() => setSidebarOpen(false)} />
+            <aside className="relative z-10 w-[260px] bg-white px-5 py-6 overflow-y-auto">
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-xl"
+              >✕</button>
+              <SidebarContent />
+            </aside>
+          </div>
+        )}
+
+        <main className="flex-1 min-w-0 pb-20 lg:pb-0">
+
+          {/* ── DASHBOARD VIEW ── */}
           {view === "dashboard" && (
-            <div className="space-y-8">
-              <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
-                <StatCard title="Posts ready" value={String(stats.postsReady)} />
-                <StatCard title="Drafts" value={String(stats.drafts)} />
-                <StatCard title="Ideas" value={String(stats.ideas)} />
-                <StatCard title="Channels" value={String(stats.channels)} />
-                <StatCard title="Scheduled" value={String(stats.scheduled)} />
-              </section>
+            <div className="p-4 lg:p-8 space-y-5 max-w-2xl mx-auto lg:max-w-none">
 
-              <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-                <div className="rounded-[28px] border border-white/70 bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.18em] text-slate-400">AI suggestion</p>
-                      <h3 className="mt-2 text-xl font-semibold tracking-tight">
-                        Your next high-conversion content angle
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900">
+                    {greeting}, {userName}! 👋
+                  </h2>
+                  <p className="text-sm text-slate-500 mt-0.5">Let's grow your brand today.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600">
+                    🔔
+                    <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-emerald-500" />
+                  </button>
+                  <button
+                    onClick={() => setSidebarOpen(true)}
+                    className="lg:hidden flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600"
+                  >☰</button>
+                </div>
+              </div>
+
+              {/* CTA buttons */}
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setView("generator")}
+                  className="flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-4 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-600 transition"
+                >
+                  ✨ Generate now
+                </button>
+                <button
+                  onClick={() => setView("calendar")}
+                  className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+                >
+                  📅 Open calendar
+                </button>
+              </div>
+
+              {/* Quick actions */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Quick actions</p>
+                  <button className="text-xs text-emerald-600 font-medium">See all →</button>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { label: "Create fresh draft", icon: "✏️", hint: "Generate a new post in seconds", action: () => setView("generator") },
+                    { label: "Review saved drafts", icon: "📄", hint: "Copy, refine and reuse existing posts", action: () => setView("drafts") },
+                    { label: "Plan weekly content", icon: "📅", hint: "Keep your publishing consistent", action: () => setView("calendar") },
+                  ].map((item) => (
+                    <button
+                      key={item.label}
+                      onClick={item.action}
+                      className="flex flex-col items-start gap-2 rounded-2xl border border-slate-100 bg-white p-4 text-left hover:border-emerald-200 hover:shadow-sm transition"
+                    >
+                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-lg">
+                        {item.icon}
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-slate-800 leading-tight">{item.label}</p>
+                        <p className="mt-0.5 text-[10px] text-slate-400 leading-tight hidden sm:block">{item.hint}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Your Growth */}
+              <div className="rounded-2xl border border-slate-100 bg-white overflow-hidden">
+                <div className="p-5">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Your growth</p>
+                      <h3 className="mt-1 text-xl font-bold text-slate-900">
+                        {growthLevel.name} {growthLevel.emoji}
                       </h3>
+                      <p className="mt-0.5 text-sm text-slate-500">{growthLevel.description}</p>
+                      {growthProgress.postsLeft > 0 && (
+                        <p className="mt-1 text-sm font-semibold text-emerald-600">
+                          {growthProgress.postsLeft} more post{growthProgress.postsLeft !== 1 ? "s" : ""} to grow! 🌱
+                        </p>
+                      )}
+                      <div className="mt-4">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-xs text-slate-500">{posts.length} / {growthProgress.nextLevel.postsNeeded} posts this week</p>
+                        </div>
+                        <div className="h-2 w-full rounded-full bg-slate-100">
+                          <div
+                            className="h-2 rounded-full bg-emerald-500 transition-all duration-500"
+                            style={{ width: `${growthProgress.progress}%` }}
+                          />
+                        </div>
+                        <p className="mt-1 text-xs text-slate-400">Next milestone: {growthProgress.nextLevel.name} {growthProgress.nextLevel.emoji}</p>
+                      </div>
                     </div>
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-500">Suggested</span>
+                    <div className="flex h-24 w-24 items-center justify-center text-6xl ml-4 shrink-0">
+                      {growthLevel.emoji}
+                    </div>
                   </div>
-                  <p className="mt-4 max-w-xl text-sm leading-6 text-slate-600">
-                    Build a trust-focused post around your offer, client results or a behind-the-scenes story
-                    before the weekend. This usually performs well for local service brands.
-                  </p>
-                  <div className="mt-6 flex flex-wrap gap-3">
+                </div>
+                <div className="border-t border-slate-50 bg-emerald-50/50 px-5 py-3">
+                  <div className="flex items-center gap-4">
+                    <div className="text-center">
+                      <p className="text-lg font-bold text-slate-900">{posts.length}</p>
+                      <p className="text-xs text-slate-500">Posts</p>
+                    </div>
+                    <div className="h-8 w-px bg-slate-200" />
+                    <div className="text-center">
+                      <p className="text-lg font-bold text-slate-900">{stats.scheduled}</p>
+                      <p className="text-xs text-slate-500">Scheduled</p>
+                    </div>
+                    <div className="h-8 w-px bg-slate-200" />
+                    <div className="text-center">
+                      <p className="text-lg font-bold text-emerald-600">Lv.{GROWTH_LEVELS.indexOf(growthLevel) + 1}</p>
+                      <p className="text-xs text-slate-500">Level</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Recent drafts */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Recent drafts</p>
+                  <button onClick={() => setView("drafts")} className="text-xs text-emerald-600 font-medium">See all →</button>
+                </div>
+
+                {loadingPosts && (
+                  <div className="rounded-2xl border border-slate-100 bg-white p-4 text-sm text-slate-400">Loading...</div>
+                )}
+
+                {!loadingPosts && recentPosts.length === 0 && (
+                  <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-center">
+                    <p className="text-2xl mb-2">🌱</p>
+                    <p className="text-sm text-slate-400">No drafts yet. Generate your first post!</p>
                     <button
                       onClick={() => setView("generator")}
-                      className="rounded-2xl bg-black px-4 py-3 text-sm font-medium text-white"
+                      className="mt-3 rounded-xl bg-emerald-500 px-4 py-2 text-xs font-semibold text-white"
                     >
                       Generate now
                     </button>
-                    <button
-                      onClick={() => setView("calendar")}
-                      className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700"
-                    >
-                      Open calendar
-                    </button>
                   </div>
-                </div>
+                )}
 
-                <div className="rounded-[28px] border border-white/70 bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-                  <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Quick actions</p>
-                  <div className="mt-4 grid gap-3">
+                <div className="space-y-2">
+                  {recentPosts.map((post) => (
                     <button
-                      onClick={() => setView("generator")}
-                      className="rounded-2xl border border-slate-200 px-4 py-3 text-left transition hover:bg-slate-50"
-                    >
-                      <div className="text-sm font-medium">Create fresh draft</div>
-                      <div className="mt-1 text-xs text-slate-400">Generate a new post in seconds</div>
-                    </button>
-                    <button
+                      key={post.id}
                       onClick={() => setView("drafts")}
-                      className="rounded-2xl border border-slate-200 px-4 py-3 text-left transition hover:bg-slate-50"
+                      className="w-full flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 text-left hover:border-emerald-200 hover:shadow-sm transition"
                     >
-                      <div className="text-sm font-medium">Review saved drafts</div>
-                      <div className="mt-1 text-xs text-slate-400">Copy, refine and reuse existing posts</div>
+                      <div className="h-12 w-12 shrink-0 rounded-xl bg-slate-100 flex items-center justify-center text-2xl">
+                        {getPlatformIcon(post)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-800 line-clamp-1">{post.content.split("\n")[0] || "Draft post"}</p>
+                        <p className="mt-0.5 text-xs text-emerald-600 font-medium">Draft</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-xs text-slate-400">{formatDate(post.created_at)}</p>
+                        <p className="text-slate-300 text-sm">›</p>
+                      </div>
                     </button>
-                    <button
-                      onClick={() => setView("calendar")}
-                      className="rounded-2xl border border-slate-200 px-4 py-3 text-left transition hover:bg-slate-50"
-                    >
-                      <div className="text-sm font-medium">Plan weekly content</div>
-                      <div className="mt-1 text-xs text-slate-400">Keep your publishing consistent</div>
-                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Brand profile quick view */}
+              {brandProfile && (
+                <div className="rounded-2xl border border-slate-100 bg-white p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Brand profile</p>
+                    <Link href="/edit-brand" className="text-xs text-emerald-600 font-medium">Edit →</Link>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {brandProfile.company && <span className="rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">{brandProfile.company}</span>}
+                    {brandProfile.industry && <span className="rounded-full bg-slate-50 border border-slate-100 px-3 py-1 text-xs text-slate-600">{brandProfile.industry}</span>}
+                    {brandProfile.tone && <span className="rounded-full bg-slate-50 border border-slate-100 px-3 py-1 text-xs text-slate-600">{brandProfile.tone}</span>}
                   </div>
                 </div>
-              </section>
+              )}
 
-              <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-                <div className="rounded-[28px] border border-white/70 bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">Brand profile</h3>
-                    <Link href="/edit-brand" className="text-sm font-medium text-slate-500 hover:text-black">
-                      Edit
-                    </Link>
+              {!brandProfile && !loadingProfile && (
+                <Link
+                  href="/edit-brand"
+                  className="flex items-center gap-3 rounded-2xl border border-dashed border-emerald-200 bg-emerald-50 p-4 hover:bg-emerald-100 transition"
+                >
+                  <span className="text-2xl">🧠</span>
+                  <div>
+                    <p className="text-sm font-semibold text-emerald-800">Set up your brand profile</p>
+                    <p className="text-xs text-emerald-600">Help AI understand your brand for better content</p>
                   </div>
-                  {loadingProfile && <p className="mt-4 text-sm text-slate-500">Loading profile...</p>}
-                  {profileError && <p className="mt-4 text-sm text-red-600">{profileError}</p>}
-                  {!loadingProfile && !profileError && (
-                    <div className="mt-5 space-y-4 text-sm">
-                      <ProfileRow label="Company" value={brandProfile?.company} />
-                      <ProfileRow label="Industry" value={brandProfile?.industry} />
-                      <ProfileRow label="Tone" value={brandProfile?.tone} />
-                      <ProfileRow label="Offer" value={brandProfile?.offer} />
-                      <ProfileRow label="Audience" value={brandProfile?.audience} />
+                  <span className="ml-auto text-emerald-500">›</span>
+                </Link>
+              )}
+            </div>
+          )}
+
+          {/* ── GENERATOR VIEW ── */}
+          {view === "generator" && (
+            <div className="p-4 lg:p-8 max-w-4xl mx-auto lg:max-w-none">
+              <div className="flex items-center gap-3 mb-6">
+                <button onClick={() => setView("dashboard")} className="lg:hidden text-slate-400 hover:text-slate-600">‹</button>
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900">AI Content Generator</h2>
+                  <p className="text-sm text-slate-500">Create posts tailored to your brand</p>
+                </div>
+              </div>
+
+              <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+                <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-4">Content setup</p>
+
+                  <label className="mb-1.5 block text-sm font-medium text-slate-700">Platform</label>
+                  <select
+                    value={generatorForm.platform}
+                    onChange={(e) => setGeneratorForm((p) => ({ ...p, platform: e.target.value as GeneratorForm["platform"] }))}
+                    className="mb-4 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition"
+                  >
+                    <option>Instagram</option>
+                    <option>Facebook</option>
+                    <option>LinkedIn</option>
+                  </select>
+
+                  <label className="mb-1.5 block text-sm font-medium text-slate-700">Post type</label>
+                  <select
+                    value={generatorForm.type}
+                    onChange={(e) => setGeneratorForm((p) => ({ ...p, type: e.target.value as GeneratorForm["type"] }))}
+                    className="mb-4 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition"
+                  >
+                    <option>Sales post</option>
+                    <option>Educational</option>
+                    <option>Storytelling</option>
+                  </select>
+
+                  <label className="mb-1.5 block text-sm font-medium text-slate-700">Topic</label>
+                  <input
+                    value={generatorForm.topic}
+                    onChange={(e) => setGeneratorForm((p) => ({ ...p, topic: e.target.value }))}
+                    placeholder="e.g. spring offer, new product, client result"
+                    className="mb-4 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition"
+                  />
+
+                  <label className="mb-1.5 block text-sm font-medium text-slate-700">Tone</label>
+                  <select
+                    value={tone}
+                    onChange={(e) => setTone(e.target.value)}
+                    className="mb-4 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition"
+                  >
+                    <option value="default">Default (brand voice)</option>
+                    <option value="bold">Bold & confident</option>
+                    <option value="casual">Casual & friendly</option>
+                    <option value="funny">Funny & playful</option>
+                    <option value="formal">Formal & professional</option>
+                    <option value="inspiring">Inspiring & motivational</option>
+                  </select>
+
+                  <label className="mb-1.5 block text-sm font-medium text-slate-700">Length</label>
+                  <select
+                    value={length}
+                    onChange={(e) => setLength(e.target.value)}
+                    className="mb-4 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition"
+                  >
+                    <option value="short">Short (1-3 lines)</option>
+                    <option value="medium">Medium (4-6 lines)</option>
+                    <option value="long">Long (7-10 lines)</option>
+                  </select>
+
+                  <div className="mb-4 flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
+                    <input
+                      type="checkbox"
+                      id="hashtags"
+                      checked={includeHashtags}
+                      onChange={(e) => setIncludeHashtags(e.target.checked)}
+                      className="h-4 w-4 accent-emerald-500"
+                    />
+                    <label htmlFor="hashtags" className="text-sm font-medium text-slate-700 cursor-pointer">Include hashtags</label>
+                  </div>
+
+                  <label className="mb-1.5 block text-sm font-medium text-slate-700">Scheduled date & time</label>
+                  <input
+                    type="datetime-local"
+                    value={scheduledDate}
+                    onChange={(e) => setScheduledDate(e.target.value)}
+                    className="mb-5 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none focus:border-emerald-400 transition"
+                  />
+
+                  <button
+                    onClick={handleGenerate}
+                    disabled={loadingGenerate}
+                    className="w-full rounded-xl bg-emerald-500 py-3.5 text-sm font-semibold text-white hover:bg-emerald-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loadingGenerate ? "Generating..." : "✨ Generate content"}
+                  </button>
+
+                  {generateError && <p className="mt-3 text-sm text-red-500">{generateError}</p>}
+                  {copyMessage && <p className="mt-3 text-sm text-emerald-600">{copyMessage}</p>}
+                  {saveMessage && <p className="mt-3 text-sm text-emerald-600">{saveMessage}</p>}
+                </div>
+
+                <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Output</p>
+                      <h3 className="text-lg font-bold text-slate-900">Generated post</h3>
+                    </div>
+                    {generatedPost && (
+                      <button onClick={() => setGeneratedPost("")} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-50">
+                        Clear
+                      </button>
+                    )}
+                  </div>
+
+                  {!generatedPost && !loadingGenerate && (
+                    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 p-10 text-center">
+                      <span className="text-4xl mb-3">✨</span>
+                      <p className="text-sm text-slate-400">No content yet. Hit generate to see your post here.</p>
                     </div>
                   )}
-                </div>
 
-                <div className="rounded-[28px] border border-white/70 bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">Recent drafts</h3>
-                    <button
-                      onClick={() => setView("drafts")}
-                      className="text-sm font-medium text-slate-500 hover:text-black"
-                    >
-                      See all
-                    </button>
-                  </div>
-                  {loadingPosts && <p className="mt-4 text-sm text-slate-500">Loading drafts...</p>}
-                  {postsError && <p className="mt-4 text-sm text-red-600">{postsError}</p>}
-                  {!loadingPosts && !postsError && recentPosts.length === 0 && (
-                    <div className="mt-4 rounded-2xl border border-dashed border-slate-200 p-5 text-sm text-slate-400">
-                      No drafts yet. Generate your first premium content piece.
+                  {loadingGenerate && (
+                    <div className="flex flex-col items-center justify-center rounded-2xl bg-emerald-50 p-10 text-center">
+                      <span className="text-4xl mb-3 animate-bounce">🌱</span>
+                      <p className="text-sm text-emerald-600 font-medium">Growing your content...</p>
                     </div>
                   )}
-                  <div className="mt-4 space-y-3">
-                    {recentPosts.map((post) => (
-                      <div key={post.id} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
-                        <p className="line-clamp-3 whitespace-pre-wrap text-sm leading-6 text-slate-700">
-                          {post.content}
-                        </p>
-                        <div className="mt-3 flex items-center justify-between gap-3">
-                          <div className="flex flex-col">
-                            <span className="text-xs text-slate-400">
-                              Created: {formatDateTime(post.created_at)}
-                            </span>
-                            {post.scheduled_for && (
-                              <span className="text-xs text-slate-400">
-                                Scheduled: {formatDateTime(post.scheduled_for)}
+
+                  {generatedPost && !loadingGenerate && (
+                    <>
+                      <div className="rounded-2xl bg-slate-50 border border-slate-100 p-4 mb-4">
+                        <p className="text-xs text-slate-400 uppercase tracking-wider mb-3">Preview</p>
+                        <div className="whitespace-pre-wrap text-sm leading-7 text-slate-800">{generatedPost}</div>
+                      </div>
+                      <div className="rounded-xl border border-slate-100 bg-white p-3 mb-4">
+                        <p className="text-xs text-slate-400 uppercase tracking-wider">Publishing slot</p>
+                        <p className="mt-1 text-sm font-medium text-slate-700">{scheduledDate ? formatDateTime(scheduledDate) : "No date set"}</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <button onClick={() => handleCopy(generatedPost)} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Copy</button>
+                        <button onClick={handleGenerate} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Regenerate</button>
+                        <button
+                          onClick={handleSaveToCalendar}
+                          disabled={savingToCalendar}
+                          className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600 disabled:opacity-50"
+                        >
+                          {savingToCalendar ? "Saving..." : "Save to calendar"}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── CALENDAR VIEW ── */}
+          {view === "calendar" && (
+            <div className="p-4 lg:p-8 max-w-4xl mx-auto lg:max-w-none">
+              <div className="flex items-center gap-3 mb-6">
+                <button onClick={() => setView("dashboard")} className="lg:hidden text-slate-400">‹</button>
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900">Content Calendar</h2>
+                  <p className="text-sm text-slate-500">Plan and schedule your posts</p>
+                </div>
+              </div>
+
+              <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+                <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                  <div className="mb-5 flex items-center justify-between">
+                    <h3 className="font-bold text-slate-900">{monthLabel}</h3>
+                    <div className="flex gap-1">
+                      <button onClick={() => setCurrentMonth(addMonths(currentMonth, -1))} className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50">‹</button>
+                      <button onClick={() => setCurrentMonth(new Date())} className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50">Today</button>
+                      <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50">›</button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-7 gap-1 mb-1">
+                    {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
+                      <div key={i} className="py-2 text-center text-xs font-semibold text-slate-400">{d}</div>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-7 gap-1">
+                    {calendarDays.map((day, index) => {
+                      const isToday = day ? isSameDay(day, new Date()) : false;
+                      const isSelected = day && selectedDate ? isSameDay(day, selectedDate) : false;
+                      const hasPost = !!day && posts.some((p) => p.scheduled_for && isSameDay(new Date(p.scheduled_for), day));
+
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => { if (!day) return; setSelectedDate(day); setScheduledDate(toDateTimeLocalString(day)); }}
+                          disabled={!day}
+                          className={`relative min-h-[48px] rounded-xl p-1.5 text-left transition ${
+                            !day ? "cursor-default" :
+                            isSelected ? "bg-emerald-500 text-white shadow-sm" :
+                            isToday ? "bg-emerald-50 border border-emerald-200" :
+                            "border border-transparent hover:border-slate-200 hover:bg-slate-50"
+                          }`}
+                        >
+                          {day && (
+                            <>
+                              <span className={`text-xs font-medium ${isSelected ? "text-white" : isToday ? "text-emerald-700" : "text-slate-700"}`}>
+                                {day.getDate()}
                               </span>
-                            )}
+                              {hasPost && (
+                                <div className={`mt-1 h-1.5 w-1.5 rounded-full ${isSelected ? "bg-white" : "bg-emerald-500"}`} />
+                              )}
+                            </>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Selected day</p>
+                  <h3 className="font-bold text-slate-900 mb-4">
+                    {selectedDate ? selectedDate.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }) : "Choose a date"}
+                  </h3>
+
+                  {postsForSelectedDate.length > 0 ? (
+                    <div className="space-y-3">
+                      {postsForSelectedDate.map((post) => (
+                        <div key={post.id} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+                          <p className="text-sm text-slate-700 line-clamp-3">{post.content}</p>
+                          <div className="mt-2 flex gap-2">
+                            <button onClick={() => handleCopy(post.content)} className="rounded-lg border border-slate-200 px-2.5 py-1 text-xs text-slate-600 hover:bg-white">Copy</button>
+                            <button onClick={() => handleDelete(post.id)} className="rounded-lg border border-red-100 px-2.5 py-1 text-xs text-red-500 hover:bg-red-50">Delete</button>
                           </div>
-                          <button
-                            onClick={() => handleCopy(post.content)}
-                            className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-medium text-slate-700"
-                          >
-                            Copy
-                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-dashed border-slate-200 p-5 text-center">
+                      <p className="text-sm text-slate-400">No posts for this day</p>
+                    </div>
+                  )}
+
+                  <div className="mt-4 flex gap-2">
+                    <button
+                      onClick={() => { if (selectedDate) setScheduledDate(toDateTimeLocalString(selectedDate)); setView("generator"); }}
+                      className="flex-1 rounded-xl bg-emerald-500 py-2.5 text-sm font-semibold text-white hover:bg-emerald-600"
+                    >
+                      + Create post
+                    </button>
+                    <button onClick={() => setView("drafts")} className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-50">Drafts</button>
+                  </div>
+
+                  {saveMessage && <p className="mt-3 text-sm text-emerald-600">{saveMessage}</p>}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── ENGAGEMENT VIEW ── */}
+          {view === "engagement" && (
+            <div className="p-4 lg:p-8 max-w-4xl mx-auto lg:max-w-none">
+              <div className="flex items-center gap-3 mb-6">
+                <button onClick={() => setView("dashboard")} className="lg:hidden text-slate-400">‹</button>
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900">AI Engagement</h2>
+                  <p className="text-sm text-slate-500">Generate human-sounding comments</p>
+                </div>
+              </div>
+
+              <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+                <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                  <label className="mb-1.5 block text-sm font-medium text-slate-700">Post content (optional)</label>
+                  <textarea
+                    value={engagementPost}
+                    onChange={(e) => setEngagementPost(e.target.value)}
+                    placeholder="Paste the post you want to comment on..."
+                    rows={5}
+                    className="mb-4 w-full resize-none rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none focus:border-emerald-400 transition"
+                  />
+                  <label className="mb-1.5 block text-sm font-medium text-slate-700">Context / comment angle</label>
+                  <input
+                    value={engagementContext}
+                    onChange={(e) => setEngagementContext(e.target.value)}
+                    placeholder="e.g. thank you, question, compliment..."
+                    className="mb-5 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none focus:border-emerald-400 transition"
+                  />
+                  <button
+                    onClick={handleGenerateEngagement}
+                    disabled={loadingEngagement}
+                    className="w-full rounded-xl bg-emerald-500 py-3.5 text-sm font-semibold text-white hover:bg-emerald-600 disabled:opacity-50"
+                  >
+                    {loadingEngagement ? "Generating..." : "💬 Generate comments"}
+                  </button>
+                  {engagementError && <p className="mt-3 text-sm text-red-500">{engagementError}</p>}
+                </div>
+
+                <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Output</p>
+                  <h3 className="text-lg font-bold text-slate-900 mb-4">Comment ideas</h3>
+
+                  {engagementComments.length === 0 && !loadingEngagement && (
+                    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 p-10 text-center">
+                      <span className="text-4xl mb-3">💬</span>
+                      <p className="text-sm text-slate-400">Fill in the form and click Generate.</p>
+                    </div>
+                  )}
+
+                  {loadingEngagement && (
+                    <div className="flex flex-col items-center justify-center rounded-2xl bg-emerald-50 p-10 text-center">
+                      <span className="text-4xl mb-3 animate-bounce">💭</span>
+                      <p className="text-sm text-emerald-600">Crafting comments...</p>
+                    </div>
+                  )}
+
+                  <div className="space-y-3">
+                    {engagementComments.map((comment, i) => (
+                      <div key={i} className="rounded-xl border border-slate-100 bg-slate-50 p-4">
+                        <p className="text-sm text-slate-700 leading-6">{comment}</p>
+                        <div className="mt-2 flex justify-end">
+                          <button onClick={() => handleCopy(comment)} className="rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600 hover:bg-slate-50">Copy</button>
                         </div>
                       </div>
                     ))}
                   </div>
-                  {copyMessage && <p className="mt-4 text-sm text-green-600">{copyMessage}</p>}
+                  {copyMessage && <p className="mt-3 text-sm text-emerald-600">{copyMessage}</p>}
                 </div>
-              </section>
-            </div>
-          )}
-
-          {view === "generator" && (
-            <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-              <div className="rounded-[28px] border border-white/70 bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-                <div className="mb-6">
-                  <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Content setup</p>
-                  <h3 className="mt-2 text-xl font-semibold tracking-tight">Create premium content</h3>
-                </div>
-
-                <label className="mb-2 block text-sm font-medium text-slate-700">Platform</label>
-                <select
-                  value={generatorForm.platform}
-                  onChange={(e) =>
-                    setGeneratorForm((prev) => ({ ...prev, platform: e.target.value as GeneratorForm["platform"] }))
-                  }
-                  className="mb-4 w-full rounded-2xl border border-slate-200 bg-white p-3 text-sm outline-none transition focus:border-black"
-                >
-                  <option>Instagram</option>
-                  <option>Facebook</option>
-                  <option>LinkedIn</option>
-                </select>
-
-                <label className="mb-2 block text-sm font-medium text-slate-700">Post type</label>
-                <select
-                  value={generatorForm.type}
-                  onChange={(e) =>
-                    setGeneratorForm((prev) => ({ ...prev, type: e.target.value as GeneratorForm["type"] }))
-                  }
-                  className="mb-4 w-full rounded-2xl border border-slate-200 bg-white p-3 text-sm outline-none transition focus:border-black"
-                >
-                  <option>Sales post</option>
-                  <option>Educational</option>
-                  <option>Storytelling</option>
-                </select>
-
-                <label className="mb-2 block text-sm font-medium text-slate-700">Topic</label>
-                <input
-                  value={generatorForm.topic}
-                  onChange={(e) => setGeneratorForm((prev) => ({ ...prev, topic: e.target.value }))}
-                  placeholder="e.g. spring offer, new product, client result"
-                  className="mb-4 w-full rounded-2xl border border-slate-200 bg-white p-3 text-sm outline-none transition focus:border-black"
-                />
-<label className="mb-2 block text-sm font-medium text-slate-700">Tone</label>
-<select
-  value={tone}
-  onChange={(e) => setTone(e.target.value)}
-  className="mb-4 w-full rounded-2xl border border-slate-200 bg-white p-3 text-sm outline-none transition focus:border-black"
->
-  <option value="default">Default (brand voice)</option>
-  <option value="bold">Bold & confident</option>
-  <option value="casual">Casual & friendly</option>
-  <option value="funny">Funny & playful</option>
-  <option value="formal">Formal & professional</option>
-  <option value="inspiring">Inspiring & motivational</option>
-</select>
-
-<label className="mb-2 block text-sm font-medium text-slate-700">Post length</label>
-<select
-  value={length}
-  onChange={(e) => setLength(e.target.value)}
-  className="mb-4 w-full rounded-2xl border border-slate-200 bg-white p-3 text-sm outline-none transition focus:border-black"
->
-  <option value="short">Short (1-3 lines)</option>
-  <option value="medium">Medium (4-6 lines)</option>
-  <option value="long">Long (7-10 lines)</option>
-</select>
-<div className="mb-4 flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
-  <input
-    type="checkbox"
-    id="hashtags"
-    checked={includeHashtags}
-    onChange={(e) => setIncludeHashtags(e.target.checked)}
-    className="h-4 w-4 rounded accent-black"
-  />
-  <label htmlFor="hashtags" className="text-sm font-medium text-slate-700 cursor-pointer">
-    Include hashtags
-  </label>
-</div>
-
-                <label className="mb-2 block text-sm font-medium text-slate-700">Scheduled date & time</label>
-                <input
-                  type="datetime-local"
-                  value={scheduledDate}
-                  onChange={(e) => setScheduledDate(e.target.value)}
-                  className="mb-4 w-full rounded-2xl border border-slate-200 bg-white p-3 text-sm outline-none transition focus:border-black"
-                />
-
-                <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Current setup</p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <Tag>{generatorForm.platform}</Tag>
-                    <Tag>{generatorForm.type}</Tag>
-                    <Tag>{generatorForm.topic || "No topic yet"}</Tag>
-                    <Tag>{scheduledDate ? formatDateTime(scheduledDate) : "No date yet"}</Tag>
-                  </div>
-                </div>
-
-                <button
-                  onClick={handleGenerate}
-                  disabled={loadingGenerate}
-                  className="mt-6 w-full rounded-2xl bg-black py-3 text-sm font-medium text-white transition disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {loadingGenerate ? "Generating..." : "Generate content"}
-                </button>
-
-                {generateError && (
-                  <p className="mt-4 whitespace-pre-wrap text-sm text-red-600">{generateError}</p>
-                )}
-                {copyMessage && <p className="mt-4 text-sm text-green-600">{copyMessage}</p>}
-                {saveMessage && <p className="mt-4 text-sm text-green-600">{saveMessage}</p>}
-              </div>
-
-              <div className="rounded-[28px] border border-white/70 bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Output</p>
-                    <h3 className="mt-2 text-xl font-semibold tracking-tight">Generated post</h3>
-                  </div>
-                  <button
-                    onClick={() => setGeneratedPost("")}
-                    className="rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-600"
-                  >
-                    Clear
-                  </button>
-                </div>
-
-                {!generatedPost && !loadingGenerate ? (
-                  <div className="mt-6 rounded-3xl border border-dashed border-slate-200 p-10 text-center text-sm text-slate-400">
-                    No content yet. Generate your first post to see the preview here.
-                  </div>
-                ) : loadingGenerate ? (
-                  <div className="mt-6 rounded-3xl border border-slate-100 bg-slate-50 p-10 text-sm text-slate-500">
-                    Generating premium content...
-                  </div>
-                ) : (
-                  <>
-                    <div className="mt-6 rounded-3xl border border-slate-100 bg-[#fcfbf8] p-5">
-                      <p className="mb-4 text-xs uppercase tracking-[0.18em] text-slate-400">Preview</p>
-                      <div className="whitespace-pre-wrap text-sm leading-7 text-slate-800">{generatedPost}</div>
-                    </div>
-                    <div className="mt-5 rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
-                      <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Publishing slot</p>
-                      <p className="mt-2 text-sm text-slate-700">
-                        {scheduledDate ? formatDateTime(scheduledDate) : "Choose date and time before saving"}
-                      </p>
-                    </div>
-                    <div className="mt-5 flex flex-wrap gap-3">
-                      <button
-                        onClick={() => handleCopy(generatedPost)}
-                        className="rounded-2xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700"
-                      >
-                        Copy
-                      </button>
-                      <button
-                        onClick={handleGenerate}
-                        className="rounded-2xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700"
-                      >
-                        Regenerate
-                      </button>
-                      <button
-                        onClick={handleSaveToCalendar}
-                        disabled={savingToCalendar}
-                        className="rounded-2xl bg-black px-4 py-2.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {savingToCalendar ? "Saving..." : "Save to calendar"}
-                      </button>
-                    </div>
-                  </>
-                )}
               </div>
             </div>
           )}
 
-          {view === "calendar" && (
-            <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-              <div className="rounded-[28px] border border-white/70 bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-                <div className="mb-6 flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Publishing calendar</p>
-                    <h3 className="mt-2 text-xl font-semibold tracking-tight">{monthLabel}</h3>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setCurrentMonth(addMonths(currentMonth, -1))}
-                      className="rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700"
-                    >
-                      Prev
-                    </button>
-                    <button
-                      onClick={() => setCurrentMonth(new Date())}
-                      className="rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700"
-                    >
-                      Today
-                    </button>
-                    <button
-                      onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                      className="rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700"
-                    >
-                      Next
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-7 gap-2 text-xs text-slate-400">
-                  {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
-                    <div key={day} className="px-2 py-3 text-center font-medium">{day}</div>
-                  ))}
-                </div>
-
-                <div className="grid grid-cols-7 gap-2">
-                  {calendarDays.map((day, index) => {
-                    const isToday = day ? isSameDay(day, new Date()) : false;
-                    const isSelected = day && selectedDate ? isSameDay(day, selectedDate) : false;
-                    const hasPost =
-                      !!day &&
-                      posts.some((post) => {
-                        if (!post.scheduled_for) return false;
-                        return isSameDay(new Date(post.scheduled_for), day);
-                      });
-
-                    return (
-                      <button
-                        key={index}
-                        onClick={() => {
-                          if (!day) return;
-                          setSelectedDate(day);
-                          setScheduledDate(toDateTimeLocalString(day));
-                        }}
-                        disabled={!day}
-                        className={`min-h-[96px] rounded-2xl border p-3 text-left transition ${
-                          !day
-                            ? "cursor-default border-transparent bg-transparent"
-                            : isSelected
-                            ? "border-black bg-black text-white shadow-sm"
-                            : "border-slate-100 bg-slate-50/70 hover:bg-slate-100"
-                        }`}
-                      >
-                        {day && (
-                          <>
-                            <div className="flex items-center justify-between">
-                              <span className={`text-sm font-medium ${isSelected ? "text-white" : "text-slate-700"}`}>
-                                {day.getDate()}
-                              </span>
-                              {isToday && (
-                                <span className={`rounded-full px-2 py-0.5 text-[10px] ${isSelected ? "bg-white/15 text-white" : "bg-black text-white"}`}>
-                                  Today
-                                </span>
-                              )}
-                            </div>
-                            <div className="mt-6">
-                              {hasPost ? (
-                                <div className={`inline-flex rounded-full px-2 py-1 text-[10px] ${isSelected ? "bg-white/15 text-white" : "bg-emerald-100 text-emerald-700"}`}>
-                                  Scheduled
-                                </div>
-                              ) : (
-                                <div className={`text-[11px] ${isSelected ? "text-white/70" : "text-slate-400"}`}>
-                                  No post
-                                </div>
-                              )}
-                            </div>
-                          </>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="rounded-[28px] border border-white/70 bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Selected day</p>
-                <h3 className="mt-2 text-xl font-semibold tracking-tight">
-                  {selectedDate
-                    ? selectedDate.toLocaleDateString("en-US", {
-                        weekday: "long",
-                        month: "long",
-                        day: "numeric",
-                        year: "numeric",
-                      })
-                    : "Choose a date"}
-                </h3>
-
-                <div className="mt-6 space-y-4">
-                  {selectedDate && postsForSelectedDate.length > 0 ? (
-                    postsForSelectedDate.map((post) => (
-                      <div key={post.id} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
-                        <p className="whitespace-pre-wrap text-sm leading-6 text-slate-700">{post.content}</p>
-                        <div className="mt-3 flex items-center justify-between gap-3">
-                          <div className="flex flex-col">
-                            {post.scheduled_for && (
-                              <span className="text-xs text-slate-400">
-                                Scheduled: {formatDateTime(post.scheduled_for)}
-                              </span>
-                            )}
-                            <span className="text-xs text-slate-400">
-                              Created: {formatDateTime(post.created_at)}
-                            </span>
-                          </div>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleCopy(post.content)}
-                              className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-medium text-slate-700"
-                            >
-                              Copy
-                            </button>
-                            <button
-                              onClick={() => handleDelete(post.id)}
-                              className="rounded-xl border border-red-200 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="rounded-2xl border border-dashed border-slate-200 p-5 text-sm text-slate-400">
-                      No content assigned to this day yet.
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <button
-                    onClick={() => {
-                      if (selectedDate) setScheduledDate(toDateTimeLocalString(selectedDate));
-                      setView("generator");
-                    }}
-                    className="rounded-2xl bg-black px-4 py-3 text-sm font-medium text-white"
-                  >
-                    Create new post
-                  </button>
-                  <button
-                    onClick={() => setView("drafts")}
-                    className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-700"
-                  >
-                    Open drafts
-                  </button>
-                </div>
-
-                {saveMessage && <p className="mt-4 text-sm text-green-600">{saveMessage}</p>}
-              </div>
-            </div>
-          )}
-
-          {/* ✅ ENGAGEMENT — AI */}
-          {view === "engagement" && (
-            <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-              <div className="rounded-[28px] border border-white/70 bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">AI engagement</p>
-                <h3 className="mt-2 text-xl font-semibold tracking-tight">Generate comments</h3>
-
-                <label className="mb-2 mt-6 block text-sm font-medium text-slate-700">
-                  Post content (optional)
-                </label>
-                <textarea
-                  value={engagementPost}
-                  onChange={(e) => setEngagementPost(e.target.value)}
-                  placeholder="Paste the post you want to comment on..."
-                  rows={5}
-                  className="mb-4 w-full resize-none rounded-2xl border border-slate-200 bg-white p-3 text-sm outline-none transition focus:border-black"
-                />
-
-                <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Context / comment angle
-                </label>
-                <input
-                  value={engagementContext}
-                  onChange={(e) => setEngagementContext(e.target.value)}
-                  placeholder="e.g. thank you, question, compliment..."
-                  className="mb-6 w-full rounded-2xl border border-slate-200 bg-white p-3 text-sm outline-none transition focus:border-black"
-                />
-
-                <button
-                  onClick={handleGenerateEngagement}
-                  disabled={loadingEngagement}
-                  className="w-full rounded-2xl bg-black py-3 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {loadingEngagement ? "Generating..." : "Generate comments"}
-                </button>
-
-                {engagementError && (
-                  <p className="mt-4 text-sm text-red-600">{engagementError}</p>
-                )}
-              </div>
-
-              <div className="rounded-[28px] border border-white/70 bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Output</p>
-                <h3 className="mt-2 text-xl font-semibold tracking-tight">Comment ideas</h3>
-
-                {engagementComments.length === 0 && !loadingEngagement && (
-                  <div className="mt-6 rounded-3xl border border-dashed border-slate-200 p-10 text-center text-sm text-slate-400">
-                    No comments yet. Fill in the form and click Generate.
-                  </div>
-                )}
-
-                {loadingEngagement && (
-                  <div className="mt-6 rounded-3xl border border-slate-100 bg-slate-50 p-10 text-sm text-slate-500">
-                    Generating comment ideas...
-                  </div>
-                )}
-
-                <div className="mt-4 space-y-4">
-                  {engagementComments.map((comment, index) => (
-                    <div key={index} className="rounded-3xl border border-slate-100 bg-[#fcfbf8] p-5">
-                      <p className="text-sm leading-7 text-slate-700">{comment}</p>
-                      <div className="mt-3 flex justify-end">
-                        <button
-                          onClick={() => handleCopy(comment)}
-                          className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-medium text-slate-700"
-                        >
-                          Copy
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {copyMessage && <p className="mt-4 text-sm text-green-600">{copyMessage}</p>}
-              </div>
-            </div>
-          )}
-
+          {/* ── DRAFTS VIEW ── */}
           {view === "drafts" && (
-            <div className="rounded-[28px] border border-white/70 bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-              <div className="mb-6 flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Content library</p>
-                  <h3 className="mt-2 text-xl font-semibold tracking-tight">Saved drafts</h3>
+            <div className="p-4 lg:p-8 max-w-2xl mx-auto lg:max-w-none">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <button onClick={() => setView("dashboard")} className="lg:hidden text-slate-400">‹</button>
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-900">Saved Drafts</h2>
+                    <p className="text-sm text-slate-500">Your content library</p>
+                  </div>
                 </div>
                 <button
                   onClick={() => setView("generator")}
-                  className="rounded-2xl bg-black px-4 py-2.5 text-sm font-medium text-white"
+                  className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600"
                 >
-                  New draft
+                  + New draft
                 </button>
               </div>
 
-              {loadingPosts && (
-                <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-500">
-                  Loading drafts...
-                </div>
-              )}
-              {postsError && (
-                <div className="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-600">
-                  {postsError}
-                </div>
-              )}
-              {!loadingPosts && !postsError && posts.length === 0 && (
-                <div className="rounded-2xl border border-dashed border-slate-200 p-5 text-sm text-slate-400">
-                  No drafts yet.
+              {loadingPosts && <div className="rounded-2xl bg-white border border-slate-100 p-4 text-sm text-slate-400">Loading...</div>}
+              {postsError && <div className="rounded-2xl bg-red-50 border border-red-100 p-4 text-sm text-red-500">{postsError}</div>}
+
+              {!loadingPosts && posts.length === 0 && (
+                <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white p-12 text-center">
+                  <span className="text-5xl mb-4">📝</span>
+                  <p className="text-slate-500 mb-4">No drafts yet. Create your first post!</p>
+                  <button onClick={() => setView("generator")} className="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white">Generate now</button>
                 </div>
               )}
 
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {posts.map((post) => (
-                  <div key={post.id} className="rounded-3xl border border-slate-100 bg-[#fcfbf8] p-5">
-                    <p className="whitespace-pre-wrap text-sm leading-7 text-slate-800">{post.content}</p>
-                    <div className="mt-4 flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 pt-4">
-                      <div className="flex flex-col">
-                        <span className="text-xs text-slate-400">
-                          Created: {formatDateTime(post.created_at)}
-                        </span>
+                  <div key={post.id} className="rounded-2xl border border-slate-100 bg-white p-5">
+                    <p className="text-sm leading-6 text-slate-800 whitespace-pre-wrap">{post.content}</p>
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-50 pt-3">
+                      <div>
+                        <span className="text-xs text-slate-400">Created: {formatDateTime(post.created_at)}</span>
                         {post.scheduled_for && (
-                          <span className="text-xs text-slate-400">
-                            Scheduled: {formatDateTime(post.scheduled_for)}
-                          </span>
+                          <span className="ml-3 text-xs text-emerald-600">📅 {formatDateTime(post.scheduled_for)}</span>
                         )}
                       </div>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex gap-2">
+                        <button onClick={() => handleCopy(post.content)} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">Copy</button>
                         <button
-                          onClick={() => handleCopy(post.content)}
-                          className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700"
-                        >
-                          Copy
-                        </button>
-                        <button
-                          onClick={() => {
-                            setGeneratedPost(post.content);
-                            setScheduledDate(
-                              post.scheduled_for
-                                ? toDateTimeLocalString(new Date(post.scheduled_for))
-                                : toDateTimeLocalString(new Date())
-                            );
-                            setView("generator");
-                          }}
-                          className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700"
-                        >
-                          Open in generator
-                        </button>
-                        <button
-                          onClick={() => handleDelete(post.id)}
-                          className="rounded-xl border border-red-200 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
-                        >
-                          Delete
-                        </button>
+                          onClick={() => { setGeneratedPost(post.content); setScheduledDate(post.scheduled_for ? toDateTimeLocalString(new Date(post.scheduled_for)) : toDateTimeLocalString(new Date())); setView("generator"); }}
+                          className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                        >Edit</button>
+                        <button onClick={() => handleDelete(post.id)} className="rounded-lg border border-red-100 px-3 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50">Delete</button>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
-
-              {copyMessage && <p className="mt-4 text-sm text-green-600">{copyMessage}</p>}
+              {copyMessage && <p className="mt-4 text-sm text-emerald-600">{copyMessage}</p>}
             </div>
           )}
+
         </main>
       </div>
+
+      {/* Bottom navigation */}
+      <BottomNav />
     </div>
   );
-}
-
-function StatCard({ title, value }: { title: string; value: string }) {
-  return (
-    <div className="rounded-[26px] border border-white/70 bg-white p-4 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-      <p className="text-sm text-slate-400">{title}</p>
-      <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-900">{value}</p>
-    </div>
-  );
-}
-
-function ProfileRow({ label, value }: { label: string; value?: string | null }) {
-  return (
-    <div className="flex items-start justify-between gap-4 rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-3">
-      <span className="text-slate-400">{label}</span>
-      <span className="max-w-[60%] text-right font-medium text-slate-700">{value || "Brak danych"}</span>
-    </div>
-  );
-}
-
-function Tag({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-600">
-      {children}
-    </span>
-  );
-}
-
-function getViewTitle(view: ViewType) {
-  switch (view) {
-    case "dashboard": return "Content dashboard";
-    case "generator": return "AI content generator";
-    case "calendar": return "Content calendar";
-    case "engagement": return "Engagement assistant";
-    case "drafts": return "Draft manager";
-    default: return "Dashboard";
-  }
 }
 
 function formatDateTime(dateString: string) {
@@ -1126,12 +976,14 @@ function formatDateTime(dateString: string) {
   return date.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
 }
 
+function formatDate(dateString: string) {
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
 function isSameDay(a: Date, b: Date) {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
 function addMonths(date: Date, amount: number) {
@@ -1155,11 +1007,6 @@ function buildCalendarDays(currentMonth: Date) {
 }
 
 function toDateTimeLocalString(date: Date) {
-  const pad = (value: number) => String(value).padStart(2, "0");
-  const year = date.getFullYear();
-  const month = pad(date.getMonth() + 1);
-  const day = pad(date.getDate());
-  const hours = pad(date.getHours());
-  const minutes = pad(date.getMinutes());
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
+  const pad = (v: number) => String(v).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
