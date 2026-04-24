@@ -78,6 +78,7 @@ Write only the post text. No explanations.
       model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.9,
+max_tokens: length === "short" ? 120 : length === "long" ? 600 : 350,
     });
 
     const output = response.choices?.[0]?.message?.content ?? "No response from model.";
