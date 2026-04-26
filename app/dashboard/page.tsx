@@ -751,7 +751,7 @@ export default function DashboardPage() {
                         <p className="mt-1 text-sm font-medium text-slate-700">{scheduledDate ? formatDateTime(scheduledDate) : "No date set"}</p>
                       </div>
 
-                      {/* Media upload */}
+                      {/* ✅ NAPRAWIONY media upload */}
                       <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
                         <p className="text-xs font-medium text-slate-600 mb-2">📎 Add media (optional)</p>
                         {mediaUrl && (
