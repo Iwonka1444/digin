@@ -473,13 +473,18 @@ export default function DashboardPage() {
                 <div className="space-y-2">
                   {recentPosts.map((post) => (
                     <button key={post.id} onClick={() => setView("drafts")} className="w-full flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 text-left hover:border-emerald-200 hover:shadow-sm transition">
-                    <div className="h-12 w-12 shrink-0 rounded-xl bg-emerald-50 flex items-center justify-center overflow-hidden">
+                   <div className="relative h-12 w-12 shrink-0 rounded-xl bg-emerald-50 flex items-center justify-center overflow-hidden">
   {post.media_url ? (
     <img src={post.media_url} alt="media" className="h-full w-full object-cover" />
   ) : (
     <span className="text-sm font-bold text-emerald-600">
-  {(post.content.replace(/[^a-zA-Z]/g, "").charAt(0) || "D").toUpperCase()}
-</span>
+      {(post.content.replace(/[^a-zA-Z]/g, "").charAt(0) || "D").toUpperCase()}
+    </span>
+  )}
+  {post.media_url && (
+    <div className="absolute bottom-0 right-0 bg-emerald-500 rounded-tl-lg px-1 py-0.5 text-[8px] text-white font-bold">
+      📎
+    </div>
   )}
 </div>
                       <div className="flex-1 min-w-0">
