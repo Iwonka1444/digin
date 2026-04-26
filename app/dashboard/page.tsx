@@ -620,6 +620,19 @@ export default function DashboardPage() {
                       </div>
                       <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
                         <p className="text-xs font-medium text-slate-600 mb-2">📎 Add media (optional)</p>
+href={
+    generatorForm.platform === "Instagram"
+      ? "https://www.canva.com/create/instagram-posts/"
+      : generatorForm.platform === "Facebook"
+      ? "https://www.canva.com/create/facebook-posts/"
+      : "https://www.canva.com/create/linkedin-banners/"
+  }
+  target="_blank"
+  rel="noopener noreferrer"
+  className="mb-3 flex items-center justify-center gap-2 w-full rounded-xl border border-purple-200 bg-purple-50 px-3 py-2 text-xs font-semibold text-purple-700 hover:bg-purple-100 transition"
+>
+  🎨 Design in Canva → then upload below
+</a>
                         {mediaUrl && (
                           <img src={mediaUrl} alt="preview" className="w-full rounded-lg mb-2 max-h-40 object-cover cursor-pointer" onClick={() => setLightboxUrl(mediaUrl)} />
                         )}
