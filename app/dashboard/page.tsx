@@ -1027,7 +1027,7 @@ onChange={(e) => {
     src={post.media_url}
     alt="media"
     className="w-full rounded-xl mb-3 max-h-48 object-cover cursor-pointer"
-    onClick={() => setLightboxUrl(post.media_url!)}
+    onClick={() => setLightboxUrl(post.media_url ?? null)}
   />
 )}
                     <p className="text-sm leading-6 text-slate-800 whitespace-pre-wrap">{post.content}</p>
