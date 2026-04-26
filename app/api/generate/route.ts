@@ -68,13 +68,23 @@ Write ONLY the post text. No explanations. No labels. No intro sentences.
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      messages: [{ role: "user", content: prompt }],
+      messages: [
+        {
+          role: "system",
+          content: `You are DiGin — an elite social media strategist and copywriter.
+You think like a top marketing agency. You know what converts, what stops the scroll, what builds brands.
+You never write generic AI content. Every post feels human, strategic, and brand-specific.
+You understand psychology of buying, social proof, FOMO, and emotional triggers.
+You write for real businesses that want real results — more clients, more visibility, more sales.
+You always write in the language that matches the brand and audience.`,
+        },
+        { role: "user", content: prompt },
+      ],
       temperature: 0.85,
       max_tokens: length === "short" ? 150 : length === "long" ? 600 : 350,
     });
 
     const output = response.choices?.[0]?.message?.content ?? "No response from model.";
-
     return NextResponse.json({ output });
   } catch (error) {
     console.error("API /generate error:", error);
