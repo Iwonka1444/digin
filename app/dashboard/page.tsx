@@ -763,13 +763,17 @@ export default function DashboardPage() {
                         <input
                           type="file"
                           accept="image/*,video/*"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              setMediaFile(file);
-                              setMediaUrl(URL.createObjectURL(file));
-                            }
-                          }}
+onChange={(e) => {
+  const file = e.target.files?.[0];
+  if (file) {
+    setMediaFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setMediaUrl(ev.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  }
+}}
                           className="w-full text-xs text-slate-500 file:mr-2 file:rounded-lg file:border-0 file:bg-emerald-50 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-emerald-700"
                         />
                       </div>
