@@ -107,6 +107,7 @@ export default function DashboardPage() {
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaUrl, setMediaUrl] = useState<string>("");
   const [uploadingMedia, setUploadingMedia] = useState(false);
+const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
   const [engagementPost, setEngagementPost] = useState("");
   const [engagementContext, setEngagementContext] = useState("");
@@ -1021,9 +1022,14 @@ onChange={(e) => {
               <div className="space-y-3">
                 {posts.map((post) => (
                   <div key={post.id} className="rounded-2xl border border-slate-100 bg-white p-5">
-                    {post.media_url && (
-                      <img src={post.media_url} alt="media" className="w-full rounded-xl mb-3 max-h-48 object-cover" />
-                    )}
+                   {post.media_url && (
+  <img
+    src={post.media_url}
+    alt="media"
+    className="w-full rounded-xl mb-3 max-h-48 object-cover cursor-pointer"
+    onClick={() => setLightboxUrl(post.media_url!)}
+  />
+)}
                     <p className="text-sm leading-6 text-slate-800 whitespace-pre-wrap">{post.content}</p>
                     <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-50 pt-3">
                       <div>
@@ -1052,6 +1058,18 @@ onChange={(e) => {
       </div>
 
       {/* Bottom navigation */}
+{lightboxUrl && (
+  <div
+    className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+    onClick={() => setLightboxUrl(null)}
+  >
+    <img
+      src={lightboxUrl}
+      alt="full"
+      className="max-w-full max-h-full rounded-2xl object-contain"
+    />
+  </div>
+)}
       <BottomNav />
     </div>
   );
