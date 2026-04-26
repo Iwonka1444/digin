@@ -91,25 +91,6 @@ You always write in the language that matches the brand and audience.`,
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Generation failed" },
       { status: 500 }
-    );<p className="text-xs font-medium text-slate-600 mb-2">📎 Add media (optional)</p>
-
-  href={
-    generatorForm.platform === "Instagram"
-      ? "https://www.canva.com/create/instagram-posts/"
-      : generatorForm.platform === "Facebook"
-      ? "https://www.canva.com/create/facebook-posts/"
-      : "https://www.canva.com/create/linkedin-banners/"
-  }
-  target="_blank"
-  rel="noopener noreferrer"
-  className="mb-3 flex items-center justify-center gap-2 w-full rounded-xl border border-purple-200 bg-purple-50 px-3 py-2 text-xs font-semibold text-purple-700 hover:bg-purple-100 transition"
->
-  <span>🎨</span> Design in Canva → then upload below
-</a>
-{mediaUrl && (
-{mediaUrl && (<p className="text-xs font-medium text-slate-600 mb-2">📎 Add media (optional)</p>
-{mediaUrl && (<p className="text-xs font-medium text-slate-600 mb-2">📎 Add media (optional)</p>
-{mediaUrl && (
-
+    );
   }
 }
