@@ -477,9 +477,9 @@ export default function DashboardPage() {
   {post.media_url ? (
     <img src={post.media_url} alt="media" className="h-full w-full object-cover" />
   ) : (
-    <span className="text-lg font-bold text-emerald-600">
-      {post.content.trim().charAt(0).toUpperCase()}
-    </span>
+    <span className="text-sm font-bold text-emerald-600">
+  {(post.content.replace(/[^a-zA-Z]/g, "").charAt(0) || "D").toUpperCase()}
+</span>
   )}
 </div>
                       <div className="flex-1 min-w-0">
