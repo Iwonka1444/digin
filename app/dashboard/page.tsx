@@ -473,13 +473,15 @@ export default function DashboardPage() {
                 <div className="space-y-2">
                   {recentPosts.map((post) => (
                     <button key={post.id} onClick={() => setView("drafts")} className="w-full flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 text-left hover:border-emerald-200 hover:shadow-sm transition">
-                      <div className="h-12 w-12 shrink-0 rounded-xl bg-slate-100 flex items-center justify-center text-2xl overflow-hidden">
-                        {post.media_url ? (
-                          <img src={post.media_url} alt="media" className="h-full w-full object-cover" />
-                        ) : (
-                          getPlatformIcon(post)
-                        )}
-                      </div>
+                    <div className="h-12 w-12 shrink-0 rounded-xl bg-emerald-50 flex items-center justify-center overflow-hidden">
+  {post.media_url ? (
+    <img src={post.media_url} alt="media" className="h-full w-full object-cover" />
+  ) : (
+    <span className="text-lg font-bold text-emerald-600">
+      {post.content.trim().charAt(0).toUpperCase()}
+    </span>
+  )}
+</div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-slate-800 line-clamp-1">{post.content.split("\n")[0] || "Draft post"}</p>
                         <p className="mt-0.5 text-xs text-emerald-600 font-medium">Draft</p>
