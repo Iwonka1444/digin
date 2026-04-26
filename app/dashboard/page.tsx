@@ -865,7 +865,22 @@ export default function DashboardPage() {
                       {postsForSelectedDate.map((post) => (
                         <div key={post.id} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
                           {post.media_url && (
-                            <img src={post.media_url} alt="media" className="w-full rounded-lg mb-2 max-h-32 object-cover" />
+  <img
+    src={post.media_url}
+    alt="media"
+    className="w-full rounded-xl mb-3 max-h-48 object-cover cursor-pointer hover:max-h-96 transition-all duration-300"
+    onClick={(e) => {
+      const img = e.currentTarget;
+      if (img.classList.contains("max-h-48")) {
+        img.classList.remove("max-h-48");
+        img.classList.add("max-h-screen");
+      } else {
+        img.classList.remove("max-h-screen");
+        img.classList.add("max-h-48");
+      }
+    }}
+  />
+)}
                           )}
                           <p className="text-sm text-slate-700 line-clamp-3">{post.content}</p>
                           <div className="mt-2 flex gap-2">
