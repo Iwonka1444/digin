@@ -886,7 +886,7 @@ onChange={(e) => {
     }}
   />
 )}
-                          )}
+                         
                           <p className="text-sm text-slate-700 line-clamp-3">{post.content}</p>
                           <div className="mt-2 flex gap-2">
                             <button onClick={() => handleCopy(post.content)} className="rounded-lg border border-slate-200 px-2.5 py-1 text-xs text-slate-600 hover:bg-white">Copy</button>
