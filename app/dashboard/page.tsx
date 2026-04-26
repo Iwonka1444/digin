@@ -631,7 +631,7 @@ href={
   rel="noopener noreferrer"
   className="mb-3 flex items-center justify-center gap-2 w-full rounded-xl border border-purple-200 bg-purple-50 px-3 py-2 text-xs font-semibold text-purple-700 hover:bg-purple-100 transition"
 >
-  🎨 Design in Canva → then upload below
+  🎨 Design in Canva - then upload below
 </a>
                         {mediaUrl && (
                           <img src={mediaUrl} alt="preview" className="w-full rounded-lg mb-2 max-h-40 object-cover cursor-pointer" onClick={() => setLightboxUrl(mediaUrl)} />
