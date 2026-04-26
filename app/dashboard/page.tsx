@@ -619,8 +619,10 @@ export default function DashboardPage() {
                         <p className="mt-1 text-sm font-medium text-slate-700">{scheduledDate ? formatDateTime(scheduledDate) : "No date set"}</p>
                       </div>
                       <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                        <p className="text-xs font-medium text-slate-600 mb-2">📎 Add media (optional)</p>
-href={
+<p className="text-xs font-medium text-slate-600 mb-2">📎 Add media (optional)</p>
+
+<a
+  href={
     generatorForm.platform === "Instagram"
       ? "https://www.canva.com/create/instagram-posts/"
       : generatorForm.platform === "Facebook"
@@ -633,7 +635,7 @@ href={
 >
   🎨 Design in Canva - then upload below
 </a>
-                        {mediaUrl && (
+                {mediaUrl && (
                           <img src={mediaUrl} alt="preview" className="w-full rounded-lg mb-2 max-h-40 object-cover cursor-pointer" onClick={() => setLightboxUrl(mediaUrl)} />
                         )}
                         {mediaFile && !mediaUrl && (
