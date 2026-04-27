@@ -1016,7 +1016,7 @@ setSavingToCalendar(false);
       setEngagementComments(json.comments || []);
       markUiComplete("engagement_used"); markUiComplete("engagement_ideas"); markActivityToday();
     } catch {
- setEngagementError(String(t.conn_err);
+ setEngagementError(String(t.conn_err));
 } finally {
   setLoadingEngagement(false);
 }
