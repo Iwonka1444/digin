@@ -11,7 +11,7 @@ type PostLang = "en" | "pl" | "nl";
 const LANG_FLAGS: Record<Lang, string> = { en: "🇬🇧", pl: "🇵🇱", nl: "🇳🇱" };
 const LANG_LABELS: Record<Lang, string> = { en: "English", pl: "Polski", nl: "Nederlands" };
 
-const T: Record<Lang, Record<string, string>> = {
+const T: Record<Lang, Record<string, string | string[]>> = {
   en: {
     // Greetings
     greeting_morning: "Good morning",
