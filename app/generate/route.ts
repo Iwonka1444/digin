@@ -46,7 +46,10 @@ export async function POST(req: Request) {
       .single();
 
     if (brandError || !brandProfile) {
-      return NextResponse.json({ error: "Brand profile not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Brand profile not found" },
+        { status: 404 }
+      );
     }
 
     const body = await req.json();
@@ -67,8 +70,49 @@ export async function POST(req: Request) {
       apiKey: process.env.OPENAI_API_KEY,
     });
 
+    // STEP 1: zamienia słaby temat usera w dobry marketing angle
+    const topicRewritePrompt = `
+Rewrite this raw user topic into a strong marketing angle.
+
+The user may write something simple like:
+"25% discount"
+"new website offer"
+"logo promotion"
+"social media service"
+
+Your job:
+- find the real customer problem behind it
+- make it about the customer, not the brand
+- make it emotional, specific and relatable
+- do NOT write a post yet
+- return only one rewritten topic sentence
+
+Raw topic:
+${topic || "general brand promotion"}
+`;
+
+    const topicRewriteResponse = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You transform weak marketing topics into strong customer-focused angles.",
+        },
+        { role: "user", content: topicRewritePrompt },
+      ],
+      temperature: 0.7,
+      max_tokens: 80,
+    });
+
+    const rewrittenTopic =
+      topicRewriteResponse.choices?.[0]?.message?.content?.trim() ||
+      topic ||
+      "helping customers understand why their online presence is not bringing clients";
+
+    // STEP 2: generuje właściwy post
     const prompt = `
-You are a top-tier social media copywriter.
+You are a high-performing social media copywriter.
 
 Write like a human. Not like AI. Not like a corporate brand.
 
@@ -82,47 +126,39 @@ Brand:
 - Visual style: ${visualStyle}
 
 Use the brand colors and visual style as inspiration for the mood, word choice and vibe.
-Example:
-- minimalist = simple, calm, clean copy
-- bold = sharper hooks, more confidence
-- elegant/luxury = premium, refined words
-- natural = warmer and more human
-- playful = lighter and more creative
 
-Task:
-Write a ${type} post for ${platform}.
-
-Topic:
 Task:
 Write a ${type} post for ${platform}.
 
 Write like someone who understands real clients, not marketing theory.
 Avoid sounding like an ad. Sound like a real observation.
 
-STRICT RULES:
+Original user topic:
+${topic || "general brand promotion"}
+
+Improved marketing angle:
+${rewrittenTopic}
+
 STRICT RULES:
 - NEVER write like a promotion or announcement
 - NEVER start with discounts, offers, or "only X people"
 - ALWAYS start from a real pain, frustration, or situation
 - Make the reader feel: "this is about me"
-
-- NO generic marketing phrases like: "key to success", "grow your business", "contact us today", "unlock your potential"
+- NO generic marketing phrases like: "key to success", "grow your business", "contact us today", "unlock your potential", "take your brand to the next level"
 - NO corporate tone
 - NO empty motivational slogans
 - NO fake excitement
 - NO long intros
-
 - Write like a real person talking
 - Keep it simple, direct, slightly emotional
 - Mix short and medium sentences
-
-- Do NOT put every sentence on a new line
-- Maximum 1 empty line between paragraphs
-- Group sentences into short paragraphs (2–3 sentences per paragraph)
-- Avoid single-sentence paragraphs unless it's a hook
-- Keep paragraphs natural
-
-- CTA must be soft and natural (not pushy)
+- Write in compact paragraphs
+- Do not create big empty spaces
+- Do not put every sentence on a separate line
+- Use maximum 2 paragraphs before CTA
+- Each paragraph should have 2–3 sentences
+- Only the hook may be a single line
+- CTA must be soft and natural, not pushy
 
 Platform style:
 ${
@@ -136,7 +172,7 @@ ${
 Post type:
 ${
   type === "Sales post"
-    ? "- show problem → tension → solution → subtle CTA"
+    ? "- show problem, tension, solution and subtle CTA"
     : type === "Educational"
     ? "- teach one specific thing clearly and simply"
     : "- tell a short real-feeling story with a beginning, tension and resolution"
@@ -148,17 +184,17 @@ ${tone === "default" ? "- use brand tone" : `- ${tone}`}
 Length:
 ${
   length === "short"
-    ? "- very short: 2 paragraphs max"
+    ? "- very short: hook + 1 paragraph + CTA"
     : length === "long"
-    ? "- longer: max 3 short paragraphs"
-    : "- medium: 2–3 paragraphs"
+    ? "- longer: hook + 2 compact paragraphs + CTA"
+    : "- medium: hook + 1–2 compact paragraphs + CTA"
 }
 
 Structure:
-- First line = relatable or painful problem
-- Then show insight or shift in thinking
-- Then subtle solution
-- End with soft CTA
+- Line 1: strong relatable hook
+- Paragraph 1: explain the problem in 2–3 sentences
+- Paragraph 2: connect the problem to the offer in 2–3 sentences
+- Final line: soft CTA
 ${
   includeHashtags
     ? "- Add hashtags in ONE final line only, max 5 hashtags"
@@ -171,24 +207,30 @@ Write ONLY the post. No explanation.
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-  {
-    role: "system",
-    content: "You are a high-performing social media copywriter who writes posts that convert into clients, not just likes."
-  },
-  { role: "user", content: prompt }
-],
+        {
+          role: "system",
+          content:
+            "You write social media posts that convert into real client interest, not just likes.",
+        },
+        { role: "user", content: prompt },
+      ],
       temperature: 0.9,
-      max_tokens: length === "short" ? 120 : length === "long" ? 600 : 350,
+      max_tokens: length === "short" ? 140 : length === "long" ? 650 : 400,
     });
 
     const rawOutput =
       response.choices?.[0]?.message?.content ?? "No response from model.";
 
-    const output = normalizeOutput(rawOutput);
+    const output = normalizeOutput(rawOutput)
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
 
     return NextResponse.json({ output });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Generation failed" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Generation failed" },
+      { status: 500 }
+    );
   }
 }
