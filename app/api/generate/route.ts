@@ -1,11 +1,40 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
-import { createClient } from "../../../lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
+
+function normalizeOutput(text: string) {
+  return text
+    .replace(/\r\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .trim();
+}
+
+function getVisualStyleLabel(style?: string | null) {
+  const map: Record<string, string> = {
+    minimalist: "minimalist, clean, calm, lots of space",
+    bold: "bold, confident, high-impact, strong contrast",
+    elegant: "elegant, refined, premium, polished",
+    playful: "playful, creative, light, friendly",
+    corporate: "structured, trustworthy, professional",
+    natural: "natural, organic, warm, human",
+    modern: "modern, fresh, sleek, digital",
+    vintage: "vintage, nostalgic, retro-inspired",
+  };
+
+  if (!style) return "not specified";
+  return map[style] || style;
+}
 
 export async function POST(req: Request) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
     if (userError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -17,14 +46,14 @@ export async function POST(req: Request) {
       .single();
 
     if (brandError || !brandProfile) {
-      return NextResponse.json({ error: "Brand profile not found." }, { status: 404 });
-    }
-
-    if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json({ error: "Missing OPENAI_API_KEY" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Brand profile not found" },
+        { status: 404 }
+      );
     }
 
     const body = await req.json();
+
     const {
       platform = "Instagram",
       type = "Sales post",
@@ -32,60 +61,150 @@ export async function POST(req: Request) {
       includeHashtags = true,
       tone = "default",
       length = "medium",
-      generateImage = false,
     } = body;
 
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const brandColors = brandProfile.brand_colors || "not specified";
+    const visualStyle = getVisualStyleLabel(brandProfile.brand_style);
 
-    const activeTone = tone === "default" ? brandProfile.tone : tone;
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
 
-    const lengthInstruction =
-      length === "short"
-        ? "Write MAXIMUM 3 short lines. This is an absolute limit — no exceptions."
-        : length === "long"
-        ? "Write 7–10 lines. Be detailed, rich, and engaging."
-        : "Write 4–6 lines. Balanced and clear.";
+    // STEP 1: zamienia słaby temat usera w dobry marketing angle
+    const topicRewritePrompt = `
+Rewrite this raw user topic into a strong marketing angle.
 
-    const platformStyle =
-      platform === "Instagram"
-        ? "Visual and emotional. Use line breaks between every sentence. Emojis allowed but not required."
-        : platform === "LinkedIn"
-        ? "Professional and insightful. Use short paragraphs. No emojis. Start with a bold statement."
-        : "Friendly and conversational. Use short sentences. Relatable tone.";
+The user may write something simple like:
+"25% discount"
+"new website offer"
+"logo promotion"
+"social media service"
 
-    const typeInstruction =
-      type === "Sales post"
-        ? "Create desire. Show a transformation or result. End with a strong, clear CTA."
-        : type === "Educational"
-        ? "Teach ONE specific, valuable thing. Give a real tip or insight. End with a key takeaway."
-        : "Tell a real story with a beginning, a tension point, and a resolution. Make it personal and human.";
+Your job:
+- find the real customer problem behind it
+- make it about the customer, not the brand
+- make it emotional, specific and relatable
+- do NOT write a post yet
+- return only one rewritten topic sentence
 
+Raw topic:
+${topic || "general brand promotion"}
+`;
+
+    const topicRewriteResponse = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You transform weak marketing topics into strong customer-focused angles.",
+        },
+        { role: "user", content: topicRewritePrompt },
+      ],
+      temperature: 0.7,
+      max_tokens: 80,
+    });
+
+    const rewrittenTopic =
+      topicRewriteResponse.choices?.[0]?.message?.content?.trim() ||
+      topic ||
+      "helping customers understand why their online presence is not bringing clients";
+
+    // STEP 2: generuje właściwy post
     const prompt = `
-You are writing a social media post for ${brandProfile.company}.
+You are a high-performing social media copywriter.
 
-BRAND CONTEXT:
+Write like a human. Not like AI. Not like a corporate brand.
+
+Brand:
+- Company: ${brandProfile.company}
 - Industry: ${brandProfile.industry}
+- Tone: ${brandProfile.tone}
 - Offer: ${brandProfile.offer}
-- Target audience: ${brandProfile.audience}
-- Brand tone: ${activeTone}
+- Audience: ${brandProfile.audience}
+- Brand colors: ${brandColors}
+- Visual style: ${visualStyle}
 
-TASK: Write ONE ${type} post for ${platform}.
-Topic: ${topic || "general brand promotion"}
+Use the brand colors and visual style as inspiration for the mood, word choice and vibe.
 
-FORMATTING RULES — follow exactly:
-- ${lengthInstruction}
-- Use line breaks between EVERY sentence or idea. Each sentence on its own line.
-- Add ONE empty line between paragraphs or sections.
-- NO walls of text. Short, punchy, scannable.
-- Platform style: ${platformStyle}
-- Post type: ${typeInstruction}
-- First line = scroll-stopping hook. Make it powerful.
-- Last line = one clear CTA.
-${includeHashtags ? "- Add 5 relevant hashtags on a NEW line at the very end, after an empty line." : "- NO hashtags."}
+Task:
+Write a ${type} post for ${platform}.
 
-LANGUAGE: Write in the language that matches the brand and audience. If the brand is Dutch, write in Dutch. If Polish, write in Polish. If English, write in English.
+Write like someone who understands real clients, not marketing theory.
+Avoid sounding like an ad. Sound like a real observation.
 
-Write ONLY the post. No explanations. No labels. No intro text. Just the post.
+Original user topic:
+${topic || "general brand promotion"}
+
+Improved marketing angle:
+${rewrittenTopic}
+
+STRICT RULES:
+- NEVER write like a promotion or announcement
+- NEVER start with discounts, offers, or "only X people"
+- ALWAYS start from a real pain, frustration, or situation
+- Make the reader feel: "this is about me"
+- NO generic marketing phrases like: "key to success", "grow your business", "contact us today", "unlock your potential", "take your brand to the next level"
+- NO corporate tone
+- NO empty motivational slogans
+- NO fake excitement
+- NO long intros
+- Write like a real person talking
+- Keep it simple, direct, slightly emotional
+- Mix short and medium sentences
+- Write in compact paragraphs
+- Do not create big empty spaces
+- Do not put every sentence on a separate line
+- Use maximum 2 paragraphs before CTA
+- Each paragraph should have 2–3 sentences
+- Only the hook may be a single line
+- CTA must be soft and natural, not pushy
+- Avoid phrases like: "you are not alone", "transform your business", "take it to the next level", "this is more than"
+- Be specific instead of generic
+- Show what actually happens (real situations, not descriptions)
+
+Platform style:
+${
+  platform === "Instagram"
+    ? "- emotional, visual, relatable, can use 1–2 emojis max"
+    : platform === "LinkedIn"
+    ? "- professional but human, no emojis"
+    : "- conversational, natural, community-driven"
+}
+
+Post type:
+${
+  type === "Sales post"
+    ? "- show problem, tension, solution and subtle CTA"
+    : type === "Educational"
+    ? "- teach one specific thing clearly and simply"
+    : "- tell a short real-feeling story with a beginning, tension and resolution"
+}
+
+Tone override:
+${tone === "default" ? "- use brand tone" : `- ${tone}`}
+
+Length:
+${
+  length === "short"
+    ? "- very short: hook + 1 paragraph + CTA"
+    : length === "long"
+    ? "- longer: hook + 2 compact paragraphs + CTA"
+    : "- medium: hook + 1–2 compact paragraphs + CTA"
+}
+
+Structure:
+- Line 1: strong relatable hook
+- Paragraph 1: explain the problem in 2–3 sentences
+- Paragraph 2: connect the problem to the offer in 2–3 sentences
+- Final line: soft CTA
+${
+  includeHashtags
+    ? "- Add hashtags in ONE final line only, max 5 hashtags"
+    : "- No hashtags"
+}
+
+Write ONLY the post. No explanation.
 `;
 
     const response = await openai.chat.completions.create({
@@ -93,73 +212,27 @@ Write ONLY the post. No explanations. No labels. No intro text. Just the post.
       messages: [
         {
           role: "system",
-          content: `You are DiGin — an elite social media strategist and copywriter.
-You think like a top marketing agency. Every post you write feels human, strategic, and brand-specific.
-You never write generic AI content. You understand psychology of buying, emotional triggers, and what stops the scroll.
-You always use proper line breaks and paragraph spacing — never write walls of text.
-You write for real businesses that want real results.
-You always write in the language of the brand and audience.`,
+          content:
+            "You write social media posts that convert into real client interest, not just likes.",
         },
         { role: "user", content: prompt },
       ],
-      temperature: 0.85,
-      max_tokens: length === "short" ? 200 : length === "long" ? 700 : 400,
+      temperature: 0.9,
+      max_tokens: length === "short" ? 140 : length === "long" ? 650 : 400,
     });
 
-    const output = response.choices?.[0]?.message?.content ?? "No response from model.";
+    const rawOutput =
+      response.choices?.[0]?.message?.content ?? "No response from model.";
 
-    // ── Image generation ────────────────────────────────────────────────────
-    let imageUrl: string | null = null;
+    const output = normalizeOutput(rawOutput)
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
 
-    if (generateImage) {
-      try {
-        // Build brand-aware image prompt
-        const brandColors = brandProfile.brand_colors || "";
-        const brandStyle = brandProfile.brand_style || "";
-
-        const imagePrompt = `
-Create a professional social media image for ${brandProfile.company}.
-
-Brand context:
-- Industry: ${brandProfile.industry}
-- Offer: ${brandProfile.offer}
-- Tone: ${activeTone}
-${brandColors ? `- Brand colors: ${brandColors}` : ""}
-${brandStyle ? `- Visual style: ${brandStyle}` : ""}
-
-Post topic: ${topic || "brand promotion"}
-Platform: ${platform}
-
-Style requirements:
-- Clean, modern, professional design
-- No text overlays (the post text will be separate)
-- ${platform === "Instagram" ? "Square format feel, visually striking" : platform === "LinkedIn" ? "Clean and corporate, trust-inspiring" : "Friendly and approachable"}
-- Consistent with the brand colors and identity
-- High quality, photorealistic or clean graphic style
-- No watermarks, no logos
-`.trim();
-
-        const imageResponse = await openai.images.generate({
-          model: "dall-e-3",
-          prompt: imagePrompt,
-          n: 1,
-          size: platform === "LinkedIn" ? "1792x1024" : "1024x1024",
-          quality: "standard",
-        });
-
-        imageUrl = imageResponse.data?.[0]?.url ?? null;
-      } catch (imgError) {
-        console.error("Image generation error:", imgError);
-        // Don't fail the whole request if image fails
-        imageUrl = null;
-      }
-    }
-
-    return NextResponse.json({ output, imageUrl });
+    return NextResponse.json({ output });
   } catch (error) {
-    console.error("API /generate error:", error);
+    console.error(error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Generation failed" },
+      { error: "Generation failed" },
       { status: 500 }
     );
   }
