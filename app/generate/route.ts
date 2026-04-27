@@ -159,6 +159,9 @@ STRICT RULES:
 - Each paragraph should have 2–3 sentences
 - Only the hook may be a single line
 - CTA must be soft and natural, not pushy
+- Avoid phrases like: "you are not alone", "transform your business", "take it to the next level", "this is more than"
+- Be specific instead of generic
+- Show what actually happens (real situations, not descriptions)
 
 Platform style:
 ${
