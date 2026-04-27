@@ -1057,7 +1057,7 @@ setRewriteError(String(t.conn_err));
   const recentPosts = useMemo(() => posts.slice(0, 3), [posts]);
   const calendarDays = useMemo(() => buildCalendarDays(currentMonth), [currentMonth]);
   const postsForSelectedDate = useMemo(() => { if (!selectedDate) return []; return posts.filter((p) => p.scheduled_for && isSameDay(new Date(p.scheduled_for), selectedDate)); }, [posts, selectedDate]);
-  const monthLabel = currentMonth.toLocaleDateString(t.cal_locale, { month: "long", year: "numeric" });
+  const monthLabel = currentMonth.toLocaleDateString(String(t.cal_locale), { month: "long", year: "numeric" });
   const currentLevel = useMemo(() => computeCurrentLevel(posts, brandProfile, uiCompletions), [posts, brandProfile, uiCompletions]);
   const levelEmoji = GROWTH_LEVEL_DATA[currentLevel]?.emoji ?? "🌱";
   const levelName = t[`lvl${currentLevel}_name` as keyof typeof t] ?? "";
@@ -1254,7 +1254,7 @@ setRewriteError(String(t.conn_err));
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-slate-800 line-clamp-1">{post.content.split("\n")[0] || "Draft"}</p>
-                        <p className="mt-0.5 text-xs text-emerald-600 font-medium">{post.scheduled_for ? `📅 ${formatDate(post.scheduled_for, t.cal_locale)}` : "Draft"}</p>
+                        <p className="mt-0.5 text-xs text-emerald-600 font-medium">{post.scheduled_for ? `📅 ${formatDate(post.scheduled_for, String(t.cal_locale))}` : "Draft"}</p>
                       </div>
                       <span className="text-slate-300">›</span>
                     </button>
@@ -1501,7 +1501,7 @@ setRewriteError(String(t.conn_err));
                     <p className="text-sm leading-6 text-slate-800 whitespace-pre-wrap">{post.content}</p>
                     <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-50 pt-3">
                       <div>
-                        <span className="text-xs text-slate-400">{t.drafts_created} {formatDateTime(post.created_at, t.cal_locale)}</span>
+                        <span className="text-xs text-slate-400">{t.drafts_created} {formatDateTime(post.created_at, String(t.cal_locale))}</span>
                         {post.scheduled_for && <span className="ml-3 text-xs text-emerald-600">📅 {formatDateTime(post.scheduled_for, t.cal_locale)}</span>}
                       </div>
                       <div className="flex gap-2">
