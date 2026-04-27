@@ -992,7 +992,7 @@ export default function DashboardPage() {
  markActivityToday();
  handleNavigate("calendar");
     } catch { 
-setGenerateError(t.conn_err); 
+setGenerateError(String(t.conn_err));
 } finally { 
 setSavingToCalendar(false);
  }
