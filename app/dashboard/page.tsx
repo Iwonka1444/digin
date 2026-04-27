@@ -963,7 +963,7 @@ export default function DashboardPage() {
 } finally {
   setLoadingGenerate(false);
 }
-
+};
   const handleSaveToCalendar = async () => {
     try {
       if (!generatedPost.trim()) { setGenerateError("Generate a post first."); return; }
@@ -989,7 +989,8 @@ export default function DashboardPage() {
       const savedDate = new Date(scheduledForISO);
       setSelectedDate(savedDate); setCurrentMonth(new Date(savedDate.getFullYear(), savedDate.getMonth(), 1));
       setSaveMessage("✅"); markActivityToday(); handleNavigate("calendar");
-    } catch { setGenerateError(t.conn_err); } finally { setSavingToCalendar(false); }
+    } catch { setGenerateError(t.conn_err); } finally { setSavingToCalendar(false);
+ }
   };
 
   const handleCopy = async (text: string) => {
