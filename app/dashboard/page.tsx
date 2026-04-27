@@ -1226,6 +1226,15 @@ setRewriteError(String(t.conn_err));
                 <button onClick={() => handleNavigate("generator")} className="flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-4 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-600 transition">{t.btn_generate}</button>
                 <button onClick={() => handleNavigate("brandlab")} className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">{t.btn_brandlab}</button>
               </div>
+<div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
+  <button
+    type="button"
+    onClick={connectFacebook}
+    className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition"
+  >
+    🔗 Połącz z Facebook
+  </button>
+</div>
               <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
