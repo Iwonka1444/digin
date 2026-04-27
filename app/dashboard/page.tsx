@@ -6,8 +6,6 @@ const tString = (val: string | string[]) =>
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
-// ─── Language system ──────────────────────────────────────────────────────────
-
 type Lang = "en" | "pl" | "nl";
 type PostLang = "en" | "pl" | "nl";
 
@@ -18,12 +16,10 @@ type Translation = Record<string, string | string[]>;
 
 const T: Record<Lang, Translation> = {
   en: {
-    // Greetings
     greeting_morning: "Good morning",
     greeting_afternoon: "Good afternoon",
     greeting_evening: "Good evening",
     tagline: "You don't have to do everything today.",
-    // Nav
     nav_home: "Home",
     nav_generator: "Generator",
     nav_calendar: "Calendar",
@@ -32,7 +28,6 @@ const T: Record<Lang, Translation> = {
     nav_brandlab: "Brand Lab",
     nav_signout: "Sign out",
     nav_progress: "Your progress",
-    // Dashboard
     btn_generate: "✨ Generate post",
     btn_brandlab: "🧬 Brand Lab",
     btn_calendar: "📅 Open calendar",
@@ -49,14 +44,12 @@ const T: Record<Lang, Translation> = {
     edit: "Edit →",
     setup_brand: "Set up your brand profile",
     setup_brand_hint: "Helps AI create better content for you",
-    // Language setup
     lang_setup_title: "Language settings",
     lang_app: "App language",
     lang_posting: "Languages I post in",
     lang_posting_hint: "AI will generate content in these languages",
     lang_save: "Save language settings",
     lang_saved: "Saved ✅",
-    // Generator
     gen_settings: "Settings",
     gen_platform: "Platform",
     gen_type: "Post type",
@@ -91,7 +84,6 @@ const T: Record<Lang, Translation> = {
     gen_regen: "Regenerate",
     gen_save: "Save to calendar",
     gen_saving: "Saving...",
-    // Calendar
     cal_title: "Content Calendar",
     cal_subtitle: "Plan and schedule your posts",
     cal_today: "Today",
@@ -101,7 +93,6 @@ const T: Record<Lang, Translation> = {
     cal_create: "+ Create post",
     cal_days: ["M","T","W","T","F","S","S"],
     cal_locale: "en-US",
-    // Engagement
     eng_title: "AI Engagement",
     eng_subtitle: "Comments that sound human",
     eng_post_label: "Post content (optional)",
@@ -114,7 +105,6 @@ const T: Record<Lang, Translation> = {
     eng_output_title: "Comment ideas",
     eng_empty: "Fill in the form and click Generate.",
     eng_working: "Crafting comments...",
-    // Drafts
     drafts_title: "Saved Drafts",
     drafts_subtitle: "Your content library",
     drafts_new: "+ New draft",
@@ -127,7 +117,6 @@ const T: Record<Lang, Translation> = {
     copied: "Copied ✅",
     copy_err: "Copy failed.",
     conn_err: "Connection error.",
-    // Brand Lab
     lab_title: "Brand Lab 🧬",
     lab_subtitle: "AI analyzes your brand and learns how to strengthen it.",
     lab_step1: "Brand DNA Analysis",
@@ -153,7 +142,6 @@ const T: Record<Lang, Translation> = {
     lab_rewriting: "Rewriting...",
     lab_rewrite_loading: "Creating 3 versions of your post...",
     lab_variants_title: "3 versions of your post",
-    // Growth levels
     lvl0_name: "Seed",
     lvl1_name: "Sprout",
     lvl2_name: "Small plant",
@@ -162,6 +150,8 @@ const T: Record<Lang, Translation> = {
     lvl5_name: "Buds",
     lvl6_name: "Flower",
     lvl7_name: "Brand Garden",
+    fb_connect: "Connect Facebook",
+    fb_hint: "Publish posts directly from DiGin",
   },
   pl: {
     greeting_morning: "Dzień dobry",
@@ -298,6 +288,8 @@ const T: Record<Lang, Translation> = {
     lvl5_name: "Pąki",
     lvl6_name: "Kwiat",
     lvl7_name: "Ogród marki",
+    fb_connect: "Połącz z Facebook",
+    fb_hint: "Publikuj posty bezpośrednio z DiGin",
   },
   nl: {
     greeting_morning: "Goedemorgen",
@@ -434,10 +426,10 @@ const T: Record<Lang, Translation> = {
     lvl5_name: "Knoppen",
     lvl6_name: "Bloem",
     lvl7_name: "Merktuin",
+    fb_connect: "Verbind met Facebook",
+    fb_hint: "Publiceer posts vanuit DiGin",
   },
 };
-
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 type BrandProfile = {
   company: string;
@@ -473,17 +465,9 @@ type BrandDNA = {
 
 type RewriteVariant = { label: string; description: string; content: string; };
 
-// ─── Growth Levels ────────────────────────────────────────────────────────────
-
 const GROWTH_LEVEL_DATA = [
-  { emoji: "🌰", description_key: "Seed stage" },
-  { emoji: "🌱", description_key: "Sprout stage" },
-  { emoji: "🪴", description_key: "Small plant" },
-  { emoji: "🌿", description_key: "First leaves" },
-  { emoji: "🌳", description_key: "Healthy plant" },
-  { emoji: "🌸", description_key: "Buds" },
-  { emoji: "🌺", description_key: "Flower" },
-  { emoji: "🌻", description_key: "Brand Garden" },
+  { emoji: "🌰" }, { emoji: "🌱" }, { emoji: "🪴" }, { emoji: "🌿" },
+  { emoji: "🌳" }, { emoji: "🌸" }, { emoji: "🌺" }, { emoji: "🌻" },
 ];
 
 const LEVEL_DESCRIPTIONS: Record<Lang, string[]> = {
@@ -491,8 +475,6 @@ const LEVEL_DESCRIPTIONS: Record<Lang, string[]> = {
   pl: ["Twoja marka czeka, żeby zakiełkować.", "Pierwsza iskra — zaczynasz!", "Twoja marka ma już swój głos.", "Pierwszy post gotowy do świata.", "Budujesz rytm, krok po kroku.", "Tydzień treści zaplanowany!", "Twoja marka zaczyna rozmawiać.", "Pierwsza kampania. Brawo!"],
   nl: ["Jouw merk wacht om te ontkiemen.", "Eerste vonk — je begint!", "Jouw merk heeft zijn stem gevonden.", "Eerste post klaar voor de wereld.", "Ritme opbouwen, stap voor stap.", "Een volle contentweek gepland!", "Jouw merk begint te praten.", "Eerste campagne. Goed gedaan!"],
 };
-
-// ─── Challenges ───────────────────────────────────────────────────────────────
 
 type Challenge = {
   id: string;
@@ -503,81 +485,47 @@ type Challenge = {
 };
 
 const CHALLENGES_BY_LEVEL: Challenge[][] = [
-  // Level 0
   [
-    { id: "c_company",  label_en: "Enter your company name",     label_pl: "Wpisz nazwę firmy",           label_nl: "Bedrijfsnaam invullen",
-      hint_en: "What is your brand called?",              hint_pl: "Jak się nazywa Twoja marka?",    hint_nl: "Hoe heet jouw merk?",              action: "dashboard", check: (_, p) => !!p?.company },
-    { id: "c_industry", label_en: "Choose your industry",        label_pl: "Wybierz branżę",              label_nl: "Kies je branche",
-      hint_en: "What field do you work in?",             hint_pl: "W jakiej dziedzinie działasz?",  hint_nl: "In welk vakgebied werk je?",        action: "dashboard", check: (_, p) => !!p?.industry },
-    { id: "c_tone",     label_en: "Choose your communication tone", label_pl: "Wybierz ton komunikacji", label_nl: "Kies je communicatietoon",
-      hint_en: "How does your brand speak?",             hint_pl: "Jak mówi Twoja marka?",          hint_nl: "Hoe spreekt jouw merk?",            action: "dashboard", check: (_, p) => !!p?.tone },
-    { id: "c_offer",    label_en: "Describe your offer in one sentence", label_pl: "Opisz ofertę jednym zdaniem", label_nl: "Beschrijf je aanbod in één zin",
-      hint_en: "What do you offer your customers?",      hint_pl: "Co oferujesz swoim klientom?",   hint_nl: "Wat bied je jouw klanten?",         action: "dashboard", check: (_, p) => !!p?.offer },
-    { id: "c_audience", label_en: "Describe your target customer", label_pl: "Opisz swojego klienta",   label_nl: "Beschrijf je doelklant",
-      hint_en: "Who is your brand aimed at?",            hint_pl: "Do kogo kierujesz swoją markę?", hint_nl: "Op wie richt jouw merk zich?",      action: "dashboard", check: (_, p) => !!p?.audience },
+    { id: "c_company",  label_en: "Enter your company name", label_pl: "Wpisz nazwę firmy", label_nl: "Bedrijfsnaam invullen", hint_en: "What is your brand called?", hint_pl: "Jak się nazywa Twoja marka?", hint_nl: "Hoe heet jouw merk?", action: "dashboard", check: (_, p) => !!p?.company },
+    { id: "c_industry", label_en: "Choose your industry", label_pl: "Wybierz branżę", label_nl: "Kies je branche", hint_en: "What field do you work in?", hint_pl: "W jakiej dziedzinie działasz?", hint_nl: "In welk vakgebied werk je?", action: "dashboard", check: (_, p) => !!p?.industry },
+    { id: "c_tone",     label_en: "Choose your communication tone", label_pl: "Wybierz ton komunikacji", label_nl: "Kies je communicatietoon", hint_en: "How does your brand speak?", hint_pl: "Jak mówi Twoja marka?", hint_nl: "Hoe spreekt jouw merk?", action: "dashboard", check: (_, p) => !!p?.tone },
+    { id: "c_offer",    label_en: "Describe your offer in one sentence", label_pl: "Opisz ofertę jednym zdaniem", label_nl: "Beschrijf je aanbod in één zin", hint_en: "What do you offer your customers?", hint_pl: "Co oferujesz swoim klientom?", hint_nl: "Wat bied je jouw klanten?", action: "dashboard", check: (_, p) => !!p?.offer },
+    { id: "c_audience", label_en: "Describe your target customer", label_pl: "Opisz swojego klienta", label_nl: "Beschrijf je doelklant", hint_en: "Who is your brand aimed at?", hint_pl: "Do kogo kierujesz swoją markę?", hint_nl: "Op wie richt jouw merk zich?", action: "dashboard", check: (_, p) => !!p?.audience },
   ],
-  // Level 1
   [
-    { id: "c_platform", label_en: "Choose a platform",           label_pl: "Wybierz platformę",           label_nl: "Kies een platform",
-      hint_en: "Instagram, Facebook or LinkedIn?",       hint_pl: "Instagram, Facebook czy LinkedIn?", hint_nl: "Instagram, Facebook of LinkedIn?", action: "generator", check: (_, __, ui) => ui.has("platform_chosen") },
-    { id: "c_generate", label_en: "Generate your first idea",    label_pl: "Wygeneruj pierwszy pomysł",   label_nl: "Genereer je eerste idee",
-      hint_en: "Doesn't have to be perfect — just start", hint_pl: "Nie musi być idealny — zacznij", hint_nl: "Hoeft niet perfect te zijn — begin gewoon", action: "generator", check: (posts) => posts.length >= 1 },
-    { id: "c_draft",    label_en: "Save your first draft",       label_pl: "Zapisz pierwszy draft",       label_nl: "Sla je eerste concept op",
-      hint_en: "Click 'Save to calendar' in the generator", hint_pl: "Kliknij 'Zapisz do kalendarza'", hint_nl: "Klik op 'Opslaan in kalender'",  action: "generator", check: (posts) => posts.length >= 1 },
+    { id: "c_platform", label_en: "Choose a platform", label_pl: "Wybierz platformę", label_nl: "Kies een platform", hint_en: "Instagram, Facebook or LinkedIn?", hint_pl: "Instagram, Facebook czy LinkedIn?", hint_nl: "Instagram, Facebook of LinkedIn?", action: "generator", check: (_, __, ui) => ui.has("platform_chosen") },
+    { id: "c_generate", label_en: "Generate your first idea", label_pl: "Wygeneruj pierwszy pomysł", label_nl: "Genereer je eerste idee", hint_en: "Doesn't have to be perfect — just start", hint_pl: "Nie musi być idealny — zacznij", hint_nl: "Hoeft niet perfect te zijn — begin gewoon", action: "generator", check: (posts) => posts.length >= 1 },
+    { id: "c_draft",    label_en: "Save your first draft", label_pl: "Zapisz pierwszy draft", label_nl: "Sla je eerste concept op", hint_en: "Click 'Save to calendar'", hint_pl: "Kliknij 'Zapisz do kalendarza'", hint_nl: "Klik op 'Opslaan in kalender'", action: "generator", check: (posts) => posts.length >= 1 },
   ],
-  // Level 2
   [
-    { id: "c_variants", label_en: "Try 3 different post variants", label_pl: "Wypróbuj 3 różne warianty", label_nl: "Probeer 3 verschillende varianten",
-      hint_en: "Change tone or type and regenerate",     hint_pl: "Zmień ton lub typ i generuj ponownie", hint_nl: "Wijzig toon of type en genereer opnieuw", action: "generator", check: (_, __, ui) => ui.has("three_variants") },
-    { id: "c_posts3",   label_en: "Save 3 drafts to library",    label_pl: "Zapisz 3 drafty do biblioteki", label_nl: "Sla 3 concepten op in bibliotheek",
-      hint_en: "Build your content library",             hint_pl: "Buduj swoją bibliotekę treści",   hint_nl: "Bouw je contentbibliotheek",        action: "generator", check: (posts) => posts.length >= 3 },
-    { id: "c_dna",      label_en: "Analyze your brand DNA",      label_pl: "Przeanalizuj DNA swojej marki", label_nl: "Analyseer jouw merk-DNA",
-      hint_en: "Go to Brand Lab and paste your posts",   hint_pl: "Wejdź w Brand Lab i wklej posty", hint_nl: "Ga naar Brand Lab en plak je posts", action: "brandlab", check: (_, __, ui) => ui.has("dna_analyzed") },
+    { id: "c_variants", label_en: "Try 3 different post variants", label_pl: "Wypróbuj 3 różne warianty", label_nl: "Probeer 3 verschillende varianten", hint_en: "Change tone or type and regenerate", hint_pl: "Zmień ton lub typ i generuj ponownie", hint_nl: "Wijzig toon of type en genereer opnieuw", action: "generator", check: (_, __, ui) => ui.has("three_variants") },
+    { id: "c_posts3",   label_en: "Save 3 drafts to library", label_pl: "Zapisz 3 drafty do biblioteki", label_nl: "Sla 3 concepten op in bibliotheek", hint_en: "Build your content library", hint_pl: "Buduj swoją bibliotekę treści", hint_nl: "Bouw je contentbibliotheek", action: "generator", check: (posts) => posts.length >= 3 },
+    { id: "c_dna",      label_en: "Analyze your brand DNA", label_pl: "Przeanalizuj DNA swojej marki", label_nl: "Analyseer jouw merk-DNA", hint_en: "Go to Brand Lab and paste your posts", hint_pl: "Wejdź w Brand Lab i wklej posty", hint_nl: "Ga naar Brand Lab en plak je posts", action: "brandlab", check: (_, __, ui) => ui.has("dna_analyzed") },
   ],
-  // Level 3
   [
-    { id: "c_schedule1", label_en: "Schedule your first post",   label_pl: "Zaplanuj pierwszy post",      label_nl: "Plan je eerste post in",
-      hint_en: "Choose when the post goes out",          hint_pl: "Zaplanuj kiedy post ma wyjść",   hint_nl: "Kies wanneer de post verschijnt",   action: "calendar", check: (posts) => posts.filter(p => p.scheduled_for).length >= 1 },
-    { id: "c_media",     label_en: "Add a photo to a post",      label_pl: "Dodaj zdjęcie do posta",      label_nl: "Voeg een foto toe aan een post",
-      hint_en: "Posts with photos get 2x more reach",   hint_pl: "Posty ze zdjęciem mają 2x więcej zasięgów", hint_nl: "Posts met foto krijgen 2x meer bereik", action: "generator", check: (posts) => posts.some(p => !!p.media_url) },
-    { id: "c_rewrite",   label_en: "Use 'Rewrite me better'",    label_pl: "Użyj 'Rewrite me better'",   label_nl: "Gebruik 'Rewrite me better'",
-      hint_en: "Brand Lab → paste post → 3 versions",   hint_pl: "Brand Lab → wklej post → 3 wersje", hint_nl: "Brand Lab → plak post → 3 versies", action: "brandlab", check: (_, __, ui) => ui.has("rewrite_used") },
+    { id: "c_schedule1", label_en: "Schedule your first post", label_pl: "Zaplanuj pierwszy post", label_nl: "Plan je eerste post in", hint_en: "Choose when the post goes out", hint_pl: "Zaplanuj kiedy post ma wyjść", hint_nl: "Kies wanneer de post verschijnt", action: "calendar", check: (posts) => posts.filter(p => p.scheduled_for).length >= 1 },
+    { id: "c_media",     label_en: "Add a photo to a post", label_pl: "Dodaj zdjęcie do posta", label_nl: "Voeg een foto toe aan een post", hint_en: "Posts with photos get 2x more reach", hint_pl: "Posty ze zdjęciem mają 2x więcej zasięgów", hint_nl: "Posts met foto krijgen 2x meer bereik", action: "generator", check: (posts) => posts.some(p => !!p.media_url) },
+    { id: "c_rewrite",   label_en: "Use 'Rewrite me better'", label_pl: "Użyj 'Rewrite me better'", label_nl: "Gebruik 'Rewrite me better'", hint_en: "Brand Lab → paste post → 3 versions", hint_pl: "Brand Lab → wklej post → 3 wersje", hint_nl: "Brand Lab → plak post → 3 versies", action: "brandlab", check: (_, __, ui) => ui.has("rewrite_used") },
   ],
-  // Level 4
   [
-    { id: "c_posts6",   label_en: "Build a library of 6 posts",  label_pl: "Przygotuj 6 postów w bibliotece", label_nl: "Bouw een bibliotheek van 6 posts",
-      hint_en: "Content for 3 weeks at 2 posts/week",   hint_pl: "Materiał na 3 tygodnie przy 2 postach/tydzień", hint_nl: "Content voor 3 weken bij 2 posts/week", action: "generator", check: (posts) => posts.length >= 6 },
-    { id: "c_edu",      label_en: "Generate an educational post", label_pl: "Wygeneruj post edukacyjny",    label_nl: "Genereer een educatieve post",
-      hint_en: "Type 'Educational' — teach and build authority", hint_pl: "Typ 'Educational' — ucz i buduj autorytet", hint_nl: "Type 'Educational' — leer en bouw autoriteit", action: "generator", check: (_, __, ui) => ui.has("educational_generated") },
-    { id: "c_sales",    label_en: "Generate a sales post",        label_pl: "Wygeneruj post sprzedażowy",  label_nl: "Genereer een verkooppost",
-      hint_en: "Type 'Sales post' — show what you offer", hint_pl: "Typ 'Sales post' — pokaż co oferujesz", hint_nl: "Type 'Sales post' — laat zien wat je biedt", action: "generator", check: (_, __, ui) => ui.has("sales_generated") },
+    { id: "c_posts6",   label_en: "Build a library of 6 posts", label_pl: "Przygotuj 6 postów w bibliotece", label_nl: "Bouw een bibliotheek van 6 posts", hint_en: "Content for 3 weeks at 2 posts/week", hint_pl: "Materiał na 3 tygodnie przy 2 postach/tydzień", hint_nl: "Content voor 3 weken bij 2 posts/week", action: "generator", check: (posts) => posts.length >= 6 },
+    { id: "c_edu",      label_en: "Generate an educational post", label_pl: "Wygeneruj post edukacyjny", label_nl: "Genereer een educatieve post", hint_en: "Type 'Educational' — teach and build authority", hint_pl: "Typ 'Educational' — ucz i buduj autorytet", hint_nl: "Type 'Educational' — leer en bouw autoriteit", action: "generator", check: (_, __, ui) => ui.has("educational_generated") },
+    { id: "c_sales",    label_en: "Generate a sales post", label_pl: "Wygeneruj post sprzedażowy", label_nl: "Genereer een verkooppost", hint_en: "Type 'Sales post' — show what you offer", hint_pl: "Typ 'Sales post' — pokaż co oferujesz", hint_nl: "Type 'Sales post' — laat zien wat je biedt", action: "generator", check: (_, __, ui) => ui.has("sales_generated") },
   ],
-  // Level 5
   [
-    { id: "c_sched3",   label_en: "Schedule 3 posts in calendar", label_pl: "Zaplanuj 3 posty w kalendarzu", label_nl: "Plan 3 posts in de kalender",
-      hint_en: "Spread posts across different days",     hint_pl: "Rozkładaj posty na różne dni",   hint_nl: "Verspreid posts over verschillende dagen", action: "calendar", check: (posts) => posts.filter(p => p.scheduled_for).length >= 3 },
-    { id: "c_posts10",  label_en: "Reach 10 posts in library",    label_pl: "Osiągnij 10 postów w bibliotece", label_nl: "Bereik 10 posts in bibliotheek",
-      hint_en: "Consistency builds brands",             hint_pl: "Regularność buduje markę",        hint_nl: "Consistentie bouwt merken",          action: "generator", check: (posts) => posts.length >= 10 },
-    { id: "c_story",    label_en: "Tell your brand story",         label_pl: "Opowiedz historię marki",    label_nl: "Vertel je merkverhaal",
-      hint_en: "Type 'Storytelling' — people buy from people they like", hint_pl: "Typ 'Storytelling'", hint_nl: "Type 'Storytelling' — mensen kopen van mensen die ze kennen", action: "generator", check: (_, __, ui) => ui.has("storytelling_generated") },
+    { id: "c_sched3",   label_en: "Schedule 3 posts in calendar", label_pl: "Zaplanuj 3 posty w kalendarzu", label_nl: "Plan 3 posts in de kalender", hint_en: "Spread posts across different days", hint_pl: "Rozkładaj posty na różne dni", hint_nl: "Verspreid posts over verschillende dagen", action: "calendar", check: (posts) => posts.filter(p => p.scheduled_for).length >= 3 },
+    { id: "c_posts10",  label_en: "Reach 10 posts in library", label_pl: "Osiągnij 10 postów w bibliotece", label_nl: "Bereik 10 posts in bibliotheek", hint_en: "Consistency builds brands", hint_pl: "Regularność buduje markę", hint_nl: "Consistentie bouwt merken", action: "generator", check: (posts) => posts.length >= 10 },
+    { id: "c_story",    label_en: "Tell your brand story", label_pl: "Opowiedz historię marki", label_nl: "Vertel je merkverhaal", hint_en: "Type 'Storytelling'", hint_pl: "Typ 'Storytelling'", hint_nl: "Type 'Storytelling'", action: "generator", check: (_, __, ui) => ui.has("storytelling_generated") },
   ],
-  // Level 6
   [
-    { id: "c_engage1",  label_en: "Generate comments for posts",  label_pl: "Wygeneruj komentarze do postów", label_nl: "Genereer reacties op posts",
-      hint_en: "Use the Engagement tool",               hint_pl: "Skorzystaj z narzędzia Engagement", hint_nl: "Gebruik de Engagement-tool",        action: "engagement", check: (_, __, ui) => ui.has("engagement_used") },
-    { id: "c_engage2",  label_en: "Generate reply ideas",         label_pl: "Wygeneruj pomysły na odpowiedzi", label_nl: "Genereer antwoordideeën",
-      hint_en: "Engaging with others builds organic reach", hint_pl: "Reagowanie u innych buduje zasięg", hint_nl: "Reageren op anderen bouwt bereik op", action: "engagement", check: (_, __, ui) => ui.has("engagement_ideas") },
-    { id: "c_sched5",   label_en: "Have 5 posts scheduled",       label_pl: "Miej 5 postów zaplanowanych", label_nl: "Heb 5 posts ingepland",
-      hint_en: "Steady rhythm = growing brand",         hint_pl: "Stały rytm = rosnąca marka",      hint_nl: "Vast ritme = groeiend merk",         action: "calendar", check: (posts) => posts.filter(p => p.scheduled_for).length >= 5 },
+    { id: "c_engage1",  label_en: "Generate comments for posts", label_pl: "Wygeneruj komentarze do postów", label_nl: "Genereer reacties op posts", hint_en: "Use the Engagement tool", hint_pl: "Skorzystaj z narzędzia Engagement", hint_nl: "Gebruik de Engagement-tool", action: "engagement", check: (_, __, ui) => ui.has("engagement_used") },
+    { id: "c_engage2",  label_en: "Generate reply ideas", label_pl: "Wygeneruj pomysły na odpowiedzi", label_nl: "Genereer antwoordideeën", hint_en: "Engaging with others builds organic reach", hint_pl: "Reagowanie u innych buduje zasięg", hint_nl: "Reageren op anderen bouwt bereik op", action: "engagement", check: (_, __, ui) => ui.has("engagement_ideas") },
+    { id: "c_sched5",   label_en: "Have 5 posts scheduled", label_pl: "Miej 5 postów zaplanowanych", label_nl: "Heb 5 posts ingepland", hint_en: "Steady rhythm = growing brand", hint_pl: "Stały rytm = rosnąca marka", hint_nl: "Vast ritme = groeiend merk", action: "calendar", check: (posts) => posts.filter(p => p.scheduled_for).length >= 5 },
   ],
-  // Level 7
   [
-    { id: "c_posts20",  label_en: "Reach 20 posts in library",    label_pl: "Osiągnij 20 postów w bibliotece", label_nl: "Bereik 20 posts in bibliotheek",
-      hint_en: "Building a real content archive",       hint_pl: "Budujesz prawdziwe archiwum treści", hint_nl: "Je bouwt een echt contentarchief",  action: "generator", check: (posts) => posts.length >= 20 },
-    { id: "c_sched10",  label_en: "Schedule 10 posts in calendar", label_pl: "Zaplanuj 10 postów w kalendarzu", label_nl: "Plan 10 posts in de kalender",
-      hint_en: "Two weeks of planned content 🔥",       hint_pl: "Dwa tygodnie zaplanowanego contentu 🔥", hint_nl: "Twee weken geplande content 🔥",   action: "calendar", check: (posts) => posts.filter(p => p.scheduled_for).length >= 10 },
-    { id: "c_media5",   label_en: "Add photos to 5 posts",        label_pl: "Dodaj zdjęcia do 5 postów",   label_nl: "Voeg foto's toe aan 5 posts",
-      hint_en: "Visual content = higher reach every time", hint_pl: "Wizualny content = wyższy zasięg", hint_nl: "Visuele content = meer bereik",     action: "generator", check: (posts) => posts.filter(p => !!p.media_url).length >= 5 },
+    { id: "c_posts20",  label_en: "Reach 20 posts in library", label_pl: "Osiągnij 20 postów w bibliotece", label_nl: "Bereik 20 posts in bibliotheek", hint_en: "Building a real content archive", hint_pl: "Budujesz prawdziwe archiwum treści", hint_nl: "Je bouwt een echt contentarchief", action: "generator", check: (posts) => posts.length >= 20 },
+    { id: "c_sched10",  label_en: "Schedule 10 posts in calendar", label_pl: "Zaplanuj 10 postów w kalendarzu", label_nl: "Plan 10 posts in de kalender", hint_en: "Two weeks of planned content 🔥", hint_pl: "Dwa tygodnie zaplanowanego contentu 🔥", hint_nl: "Twee weken geplande content 🔥", action: "calendar", check: (posts) => posts.filter(p => p.scheduled_for).length >= 10 },
+    { id: "c_media5",   label_en: "Add photos to 5 posts", label_pl: "Dodaj zdjęcia do 5 postów", label_nl: "Voeg foto's toe aan 5 posts", hint_en: "Visual content = higher reach", hint_pl: "Wizualny content = wyższy zasięg", hint_nl: "Visuele content = meer bereik", action: "generator", check: (posts) => posts.filter(p => !!p.media_url).length >= 5 },
   ],
 ];
 
@@ -588,9 +536,9 @@ const LEVEL_TITLES: Record<Lang, string[]> = {
 };
 
 const LEVEL_SUBTITLES: Record<Lang, string[]> = {
-  en: ["Start light. No pressure.","You're not publishing today — just writing. No pressure.","Time to find the style that fits you.","One small, real step. One post ready for the world.","Not every day. 2 small steps a week is enough.","Plan a full week. You'll feel in control — we promise.","You're not just publishing — you're starting to talk.","Time for something bigger. Your first brand campaign."],
-  pl: ["Zacznij lekko. Żadnej presji.","Dziś nie publikujesz — tylko piszesz. Bez presji.","Czas znaleźć styl, który pasuje właśnie do Ciebie.","Mały, realny krok. Jeden post gotowy do świata.","Nie codziennie. 2 małe kroki w tygodniu wystarczą.","Zaplanuj cały tydzień. Poczujesz kontrolę — obiecujemy.","Nie tylko publikujesz — zaczynasz rozmawiać.","Czas na coś większego. Pierwsza kampania marki."],
-  nl: ["Begin licht. Geen druk.","Je publiceert vandaag niet — je schrijft gewoon. Geen druk.","Tijd om de stijl te vinden die bij jou past.","Een kleine, echte stap. Één post klaar voor de wereld.","Niet elke dag. 2 kleine stappen per week is genoeg.","Plan een hele week. Je voelt controle — we beloven het.","Je publiceert niet alleen — je begint te praten.","Tijd voor iets groters. Jouw eerste merkcampagne."],
+  en: ["Start light. No pressure.","Just writing today. No pressure.","Time to find the style that fits you.","One small step. One post ready for the world.","Not every day. 2 small steps a week is enough.","Plan a full week. You'll feel in control.","You're not just publishing — you're starting to talk.","Time for something bigger. Your first brand campaign."],
+  pl: ["Zacznij lekko. Żadnej presji.","Dziś tylko piszesz. Bez presji.","Czas znaleźć styl, który pasuje do Ciebie.","Mały, realny krok. Jeden post gotowy do świata.","Nie codziennie. 2 małe kroki w tygodniu wystarczą.","Zaplanuj cały tydzień. Poczujesz kontrolę.","Nie tylko publikujesz — zaczynasz rozmawiać.","Czas na coś większego. Pierwsza kampania marki."],
+  nl: ["Begin licht. Geen druk.","Vandaag schrijf je gewoon. Geen druk.","Tijd om de stijl te vinden die bij jou past.","Een kleine stap. Één post klaar voor de wereld.","Niet elke dag. 2 kleine stappen per week is genoeg.","Plan een hele week. Je voelt controle.","Je publiceert niet alleen — je begint te praten.","Tijd voor iets groters. Jouw eerste merkcampagne."],
 };
 
 const LEVEL_ENCOURAGEMENTS: Record<Lang, string[]> = {
@@ -598,8 +546,6 @@ const LEVEL_ENCOURAGEMENTS: Record<Lang, string[]> = {
   pl: ["Mały krok = progres. To wystarczy na dziś.","Dzisiaj wystarczy jeden draft.","Nie musisz robić wszystkiego dziś.","Jeden post to już wystarczająco dużo.","Twoja marka chwilę odpoczywa? Wróć z jednym małym krokiem.","Nakarm swoją markę jednym małym krokiem.","Mały krok = progres. Jeden komentarz zmienia dużo.","Twoja marka urosła. Czas zbudować ogród."],
   nl: ["Kleine stap = vooruitgang. Dat is genoeg voor vandaag.","Één concept is genoeg voor vandaag.","Je hoeft niet alles vandaag te doen.","Één post is al genoeg.","Jouw merk rust even? Kom terug met één kleine stap.","Voed je merk met één kleine stap.","Kleine stap = vooruitgang. Één reactie maakt veel uit.","Jouw merk is gegroeid. Tijd om een tuin te bouwen."],
 };
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function computeCurrentLevel(posts: GeneratedPost[], profile: BrandProfile | null, ui: Set<string>): number {
   for (let lvl = 0; lvl <= 7; lvl++) {
@@ -638,7 +584,24 @@ function markActivityToday() {
   } catch {}
 }
 
-// ─── Challenge Alert ──────────────────────────────────────────────────────────
+const MODE_CONFIG = {
+  shadow: { label: "Shadow Mode", emoji: "🔮", bgClass: "bg-emerald-50 border-emerald-200", badgeClass: "bg-emerald-500 text-white" },
+  upgrade: { label: "Upgrade Mode", emoji: "🚀", bgClass: "bg-amber-50 border-amber-200", badgeClass: "bg-amber-500 text-white" },
+};
+
+function ScoreRing({ score }: { score: number }) {
+  const color = score >= 70 ? "#10b981" : score >= 50 ? "#f59e0b" : "#ef4444";
+  const r = 36; const circ = 2 * Math.PI * r; const dash = (score / 100) * circ;
+  return (
+    <div className="relative flex items-center justify-center">
+      <svg width="88" height="88" viewBox="0 0 88 88">
+        <circle cx="44" cy="44" r={r} fill="none" stroke="#e2e8f0" strokeWidth="8" />
+        <circle cx="44" cy="44" r={r} fill="none" stroke={color} strokeWidth="8" strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" transform="rotate(-90 44 44)" style={{ transition: "stroke-dasharray 1s ease" }} />
+      </svg>
+      <div className="absolute text-center"><p className="text-xl font-bold text-slate-900">{score}</p><p className="text-[10px] text-slate-400 leading-none">/ 100</p></div>
+    </div>
+  );
+}
 
 function ChallengeAlert({ posts, profile, currentLevel, ui, lang, onNavigate }: {
   posts: GeneratedPost[]; profile: BrandProfile | null; currentLevel: number;
@@ -646,7 +609,6 @@ function ChallengeAlert({ posts, profile, currentLevel, ui, lang, onNavigate }: 
 }) {
   const challenges = CHALLENGES_BY_LEVEL[currentLevel] ?? [];
   const { drops, resting } = getStreakState();
-  const t = T[lang];
 
   if (currentLevel === 7 && challenges.every((c) => c.check(posts, profile, ui))) {
     return (
@@ -654,7 +616,7 @@ function ChallengeAlert({ posts, profile, currentLevel, ui, lang, onNavigate }: 
         <div className="flex items-center gap-3">
           <span className="text-4xl">🌻</span>
           <div>
-            <p className="text-base font-bold text-amber-800">{GROWTH_LEVEL_DATA[7].emoji} {T[lang][`lvl7_name`]} — MAX!</p>
+            <p className="text-base font-bold text-amber-800">🌻 {T[lang].lvl7_name} — MAX!</p>
             <p className="text-sm text-amber-600">DiGin Legend 🏆</p>
           </div>
         </div>
@@ -713,111 +675,23 @@ function ChallengeAlert({ posts, profile, currentLevel, ui, lang, onNavigate }: 
   );
 }
 
-// ─── Language Setup Card ──────────────────────────────────────────────────────
-
-function LanguageSetup({ lang, postLangs, onSave }: {
-  lang: Lang;
-  postLangs: PostLang[];
-  onSave: (appLang: Lang, postLangs: PostLang[]) => void;
-}) {
-  const [appLang, setAppLang] = useState<Lang>(lang);
-  const [pLangs, setPLangs] = useState<PostLang[]>(postLangs);
-  const [saved, setSaved] = useState(false);
-  const t = T[lang];
-
-  const togglePostLang = (l: PostLang) => {
-    setPLangs((prev) => prev.includes(l) ? prev.filter((x) => x !== l) : [...prev, l]);
-  };
-
-  const handleSave = () => {
-    onSave(appLang, pLangs);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
-
-  return (
-    <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-      <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-4">{t.lang_setup_title}</p>
-
-      <div className="mb-4">
-        <p className="text-sm font-medium text-slate-700 mb-2">{t.lang_app}</p>
-        <div className="flex gap-2">
-          {(["en","pl","nl"] as Lang[]).map((l) => (
-            <button key={l} onClick={() => setAppLang(l)}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold border transition ${appLang === l ? "bg-emerald-500 text-white border-emerald-500 shadow-sm" : "bg-white text-slate-700 border-slate-200 hover:border-emerald-300"}`}>
-              {LANG_FLAGS[l]} {LANG_LABELS[l]}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="mb-5">
-        <p className="text-sm font-medium text-slate-700 mb-1">{t.lang_posting}</p>
-        <p className="text-xs text-slate-400 mb-2">{t.lang_posting_hint}</p>
-        <div className="flex gap-2">
-          {(["en","pl","nl"] as PostLang[]).map((l) => (
-            <button key={l} onClick={() => togglePostLang(l)}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold border transition ${pLangs.includes(l) ? "bg-slate-800 text-white border-slate-800 shadow-sm" : "bg-white text-slate-700 border-slate-200 hover:border-slate-400"}`}>
-              {LANG_FLAGS[l]} {LANG_LABELS[l]}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <button onClick={handleSave} className="w-full rounded-xl bg-emerald-500 py-3 text-sm font-semibold text-white hover:bg-emerald-600 transition">
-        {saved ? t.lang_saved : t.lang_save}
-      </button>
-    </div>
-  );
-}
-
-// ─── Mode config ──────────────────────────────────────────────────────────────
-
-const MODE_CONFIG = {
-  shadow: { label: "Shadow Mode", emoji: "🔮", bgClass: "bg-emerald-50 border-emerald-200", badgeClass: "bg-emerald-500 text-white" },
-  upgrade: { label: "Upgrade Mode", emoji: "🚀", bgClass: "bg-amber-50 border-amber-200", badgeClass: "bg-amber-500 text-white" },
-};
-
-function ScoreRing({ score }: { score: number }) {
-  const color = score >= 70 ? "#10b981" : score >= 50 ? "#f59e0b" : "#ef4444";
-  const r = 36; const circ = 2 * Math.PI * r; const dash = (score / 100) * circ;
-  return (
-    <div className="relative flex items-center justify-center">
-      <svg width="88" height="88" viewBox="0 0 88 88">
-        <circle cx="44" cy="44" r={r} fill="none" stroke="#e2e8f0" strokeWidth="8" />
-        <circle cx="44" cy="44" r={r} fill="none" stroke={color} strokeWidth="8" strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" transform="rotate(-90 44 44)" style={{ transition: "stroke-dasharray 1s ease" }} />
-      </svg>
-      <div className="absolute text-center"><p className="text-xl font-bold text-slate-900">{score}</p><p className="text-[10px] text-slate-400 leading-none">/ 100</p></div>
-    </div>
-  );
-}
-
-// ─── Main ─────────────────────────────────────────────────────────────────────
-
 export default function DashboardPage() {
   const [view, setView] = useState<ViewType>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
-  const [showLangSettings, setShowLangSettings] = useState(false);
-
-  // Language
   const [lang, setLang] = useState<Lang>("en");
   const [postLangs, setPostLangs] = useState<PostLang[]>(["en"]);
-
   const [brandProfile, setBrandProfile] = useState<BrandProfile | null>(null);
   const [generatedPost, setGeneratedPost] = useState("");
   const [posts, setPosts] = useState<GeneratedPost[]>([]);
-
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [loadingGenerate, setLoadingGenerate] = useState(false);
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [savingToCalendar, setSavingToCalendar] = useState(false);
-
   const [generateError, setGenerateError] = useState("");
   const [postsError, setPostsError] = useState("");
   const [copyMessage, setCopyMessage] = useState("");
   const [saveMessage, setSaveMessage] = useState("");
-
   const [generatorForm, setGeneratorForm] = useState<GeneratorForm>({ platform: "Instagram", type: "Sales post", topic: "" });
   const [currentMonth, setCurrentMonth] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
@@ -828,13 +702,11 @@ export default function DashboardPage() {
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaUrl, setMediaUrl] = useState<string>("");
   const [uploadingMedia, setUploadingMedia] = useState(false);
-
   const [engagementPost, setEngagementPost] = useState("");
   const [engagementContext, setEngagementContext] = useState("");
   const [engagementComments, setEngagementComments] = useState<string[]>([]);
   const [loadingEngagement, setLoadingEngagement] = useState(false);
   const [engagementError, setEngagementError] = useState("");
-
   const [analyzePosts, setAnalyzePosts] = useState("");
   const [brandDNA, setBrandDNA] = useState<BrandDNA | null>(null);
   const [loadingAnalyze, setLoadingAnalyze] = useState(false);
@@ -845,7 +717,6 @@ export default function DashboardPage() {
   const [rewriteError, setRewriteError] = useState("");
   const [rewriteMeta, setRewriteMeta] = useState<{ mode: string; userStylePct: number; improvePct: number } | null>(null);
   const [copiedRewriteIdx, setCopiedRewriteIdx] = useState<number | null>(null);
-
   const [uiCompletions, setUiCompletions] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -877,14 +748,12 @@ export default function DashboardPage() {
     if (generatorForm.type === "Storytelling") markUiComplete("storytelling_generated");
   }, [generatorForm.type]);
 
-  const handleLangSave = (appLang: Lang, pLangs: PostLang[]) => {
-    setLang(appLang);
-    setPostLangs(pLangs);
-    try {
-      localStorage.setItem("digin_lang", appLang);
-      localStorage.setItem("digin_post_langs", JSON.stringify(pLangs));
-    } catch {}
-    setShowLangSettings(false);
+  const connectFacebook = () => {
+    const appId = process.env.NEXT_PUBLIC_META_APP_ID;
+    if (!appId) { alert("Missing NEXT_PUBLIC_META_APP_ID"); return; }
+    const redirectUri = encodeURIComponent("https://digin-two.vercel.app/api/meta/callback");
+    const scope = encodeURIComponent("pages_show_list,pages_read_engagement");
+    window.location.href = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${appId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code`;
   };
 
   const handleSignOut = async () => {
@@ -893,24 +762,7 @@ export default function DashboardPage() {
     await supabase.auth.signOut();
     window.location.href = "/login";
   };
-  const connectFacebook = () => {
-    const appId = process.env.NEXT_PUBLIC_META_APP_ID;
 
-    if (!appId) {
-      alert("Missing NEXT_PUBLIC_META_APP_ID");
-      return;
-    }
-
-    const redirectUri = encodeURIComponent(
-      "https://digin-two.vercel.app/api/meta/connect"
-    );
-
-  const scope = encodeURIComponent(
-  "pages_show_list,pages_read_engagement"
-);
-
-    window.location.href = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${appId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code`;
-  };
   async function loadProfile() {
     try {
       setLoadingProfile(true);
@@ -924,37 +776,17 @@ export default function DashboardPage() {
     } catch {} finally { setLoadingProfile(false); }
   }
 
- async function loadPosts() {
-  try {
-    setLoadingPosts(true);
-    setPostsError("");
-
-    const res = await fetch("/api/posts", {
-      method: "GET",
-      cache: "no-store",
-    });
-
-    const ct = res.headers.get("content-type") || "";
-
-    if (!ct.includes("application/json")) {
-      setPostsError("Endpoint error.");
-      return;
-    }
-
-    const json = await res.json();
-
-    if (!res.ok) {
-      setPostsError(json.error || "Load error.");
-      return;
-    }
-
-    setPosts(json.data || []);
-  } catch {
-    setPostsError(String(T[lang].conn_err));
-  } finally {
-    setLoadingPosts(false);
+  async function loadPosts() {
+    try {
+      setLoadingPosts(true); setPostsError("");
+      const res = await fetch("/api/posts", { method: "GET", cache: "no-store" });
+      const ct = res.headers.get("content-type") || "";
+      if (!ct.includes("application/json")) { setPostsError("Endpoint error."); return; }
+      const json = await res.json();
+      if (!res.ok) { setPostsError(json.error || "Load error."); return; }
+      setPosts(json.data || []);
+    } catch { setPostsError("Connection error."); } finally { setLoadingPosts(false); }
   }
-}
 
   useEffect(() => { loadProfile(); loadPosts(); }, []);
 
@@ -963,29 +795,20 @@ export default function DashboardPage() {
   const handleGenerate = async () => {
     try {
       setLoadingGenerate(true); setGenerateError(""); setGeneratedPost("");
-      const res = await fetch("/api/generate", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...generatorForm, includeHashtags, tone, length, postLangs }),
-      });
+      const res = await fetch("/api/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...generatorForm, includeHashtags, tone, length, postLangs }) });
       const json = await res.json();
       if (!res.ok) { setGenerateError(json.error || "Generation error."); return; }
       if (json.output) {
-        setGeneratedPost(json.output);
-        markActivityToday();
+        setGeneratedPost(json.output); markActivityToday();
         try {
           const count = parseInt(localStorage.getItem("digin_gen_count") || "0") + 1;
           localStorage.setItem("digin_gen_count", String(count));
           if (count >= 3) markUiComplete("three_variants");
         } catch {}
       }
-    } catch {
-  setGenerateError(
-    Array.isArray(t.conn_err) ? t.conn_err[0] : t.conn_err
-  );
-} finally {
-  setLoadingGenerate(false);
-}
-};
+    } catch { setGenerateError("Connection error."); } finally { setLoadingGenerate(false); }
+  };
+
   const handleSaveToCalendar = async () => {
     try {
       if (!generatedPost.trim()) { setGenerateError("Generate a post first."); return; }
@@ -1010,14 +833,8 @@ export default function DashboardPage() {
       await loadPosts();
       const savedDate = new Date(scheduledForISO);
       setSelectedDate(savedDate); setCurrentMonth(new Date(savedDate.getFullYear(), savedDate.getMonth(), 1));
-      setSaveMessage("✅");
- markActivityToday();
- handleNavigate("calendar");
-    } catch { 
-setGenerateError(String(t.conn_err));
-} finally { 
-setSavingToCalendar(false);
- }
+      setSaveMessage("✅"); markActivityToday(); handleNavigate("calendar");
+    } catch { setGenerateError("Connection error."); } finally { setSavingToCalendar(false); }
   };
 
   const handleCopy = async (text: string) => {
@@ -1037,11 +854,7 @@ setSavingToCalendar(false);
       if (!res.ok) { setEngagementError(json.error || "Error."); return; }
       setEngagementComments(json.comments || []);
       markUiComplete("engagement_used"); markUiComplete("engagement_ideas"); markActivityToday();
-    } catch {
- setEngagementError(String(t.conn_err));
-} finally {
-  setLoadingEngagement(false);
-}
+    } catch { setEngagementError("Connection error."); } finally { setLoadingEngagement(false); }
   };
 
   const handleAnalyzeDNA = async () => {
@@ -1053,9 +866,7 @@ setSavingToCalendar(false);
       const json = await res.json();
       if (!res.ok) { setAnalyzeError(json.error || "Analysis error."); return; }
       setBrandDNA(json.brandDNA); markUiComplete("dna_analyzed"); markActivityToday();
-    } catch { 
-setAnalyzeError(String(t.conn_err));
- } finally { setLoadingAnalyze(false); }
+    } catch { setAnalyzeError("Connection error."); } finally { setLoadingAnalyze(false); }
   };
 
   const handleRewrite = async () => {
@@ -1067,10 +878,7 @@ setAnalyzeError(String(t.conn_err));
       if (!res.ok) { setRewriteError(json.error || "Error."); return; }
       setRewriteVariants(json.variants || []); setRewriteMeta({ mode: json.mode, userStylePct: json.userStylePct, improvePct: json.improvePct });
       markUiComplete("rewrite_used"); markActivityToday();
-    } catch { 
-setRewriteError(String(t.conn_err)); 
-} finally {
- setLoadingRewrite(false); }
+    } catch { setRewriteError("Connection error."); } finally { setLoadingRewrite(false); }
   };
 
   const handleNavigate = (v: ViewType) => { setView(v); setSidebarOpen(false); if (v === "drafts") markUiComplete("drafts_reviewed"); };
@@ -1082,10 +890,11 @@ setRewriteError(String(t.conn_err));
   const monthLabel = currentMonth.toLocaleDateString(String(t.cal_locale), { month: "long", year: "numeric" });
   const currentLevel = useMemo(() => computeCurrentLevel(posts, brandProfile, uiCompletions), [posts, brandProfile, uiCompletions]);
   const levelEmoji = GROWTH_LEVEL_DATA[currentLevel]?.emoji ?? "🌱";
-  const levelName = t[`lvl${currentLevel}_name` as keyof typeof t] ?? "";
+  const levelName = String(t[`lvl${currentLevel}_name`] ?? "");
   const levelDesc = LEVEL_DESCRIPTIONS[lang][currentLevel] ?? "";
-  const greeting = getGreeting(lang);
+  const greeting = String(getGreeting(lang));
   const userName = brandProfile?.company || "";
+  const analyzePostList = analyzePosts.split(/\n{2,}/).map((p) => p.trim()).filter((p) => p.length > 20);
 
   const NAV_ITEMS = [
     { id: "dashboard" as ViewType, label: t.nav_home, icon: "🏠" },
@@ -1096,16 +905,12 @@ setRewriteError(String(t.conn_err));
     { id: "brandlab"  as ViewType, label: t.nav_brandlab, icon: "🧬" },
   ];
 
-  const analyzePostList = analyzePosts.split(/\n{2,}/).map((p) => p.trim()).filter((p) => p.length > 20);
-
   const SidebarContent = () => (
     <>
       <div className="mb-6 flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500 text-white text-lg font-bold shadow-sm">D</div>
         <div><h1 className="text-lg font-bold tracking-tight text-slate-900">DiGin</h1><p className="text-xs text-slate-400">AI Marketing Assistant</p></div>
       </div>
-
-      {/* Language switcher */}
       <div className="mb-4 flex gap-1.5 rounded-xl bg-slate-50 border border-slate-100 p-1">
         {(["en","pl","nl"] as Lang[]).map((l) => (
           <button key={l} onClick={() => { setLang(l); try { localStorage.setItem("digin_lang", l); } catch {} }}
@@ -1114,7 +919,6 @@ setRewriteError(String(t.conn_err));
           </button>
         ))}
       </div>
-
       <nav className="space-y-1 mb-4">
         {NAV_ITEMS.map((item) => (
           <button key={item.id} onClick={() => handleNavigate(item.id)}
@@ -1125,8 +929,6 @@ setRewriteError(String(t.conn_err));
           </button>
         ))}
       </nav>
-
-      {/* Posting languages indicator */}
       <div className="mb-4 rounded-xl bg-slate-50 border border-slate-100 p-3">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2">{t.lang_posting}</p>
         <div className="flex gap-1.5 flex-wrap">
@@ -1134,14 +936,12 @@ setRewriteError(String(t.conn_err));
             <button key={l} onClick={() => {
               const next = postLangs.includes(l) ? postLangs.filter(x => x !== l) : [...postLangs, l];
               setPostLangs(next); try { localStorage.setItem("digin_post_langs", JSON.stringify(next)); } catch {}
-            }}
-              className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition ${postLangs.includes(l) ? "bg-slate-800 text-white" : "bg-white border border-slate-200 text-slate-400 hover:border-slate-400"}`}>
+            }} className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition ${postLangs.includes(l) ? "bg-slate-800 text-white" : "bg-white border border-slate-200 text-slate-400 hover:border-slate-400"}`}>
               {LANG_FLAGS[l]} {l.toUpperCase()}
             </button>
           ))}
         </div>
       </div>
-
       <div className="rounded-2xl bg-emerald-50 border border-emerald-100 p-4">
         <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wider mb-2">{t.nav_progress}</p>
         <div className="flex items-center gap-2">
@@ -1202,60 +1002,39 @@ setRewriteError(String(t.conn_err));
           {/* ── DASHBOARD ── */}
           {view === "dashboard" && (
             <div className="p-4 lg:p-8 space-y-5 max-w-2xl mx-auto lg:max-w-none">
+
+              {/* Header */}
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-2xl font-bold text-slate-900">{greeting}{userName ? `, ${userName}` : ""}! {levelEmoji}</h2>
-<div className="mt-4">
-  <button
-    onClick={connectFacebook}
-    className="rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition"
-  >
-    🔗 Połącz z Facebook
-  </button>
-</div>
                   <p className="text-sm text-slate-500 mt-0.5">{t.tagline}</p>
                 </div>
                 <button onClick={() => setSidebarOpen(true)} className="lg:hidden flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600">☰</button>
               </div>
 
+              {/* Challenge */}
               {!loadingPosts && !loadingProfile && (
                 <ChallengeAlert posts={posts} profile={brandProfile} currentLevel={currentLevel} ui={uiCompletions} lang={lang} onNavigate={handleNavigate} />
               )}
 
+              {/* Quick actions */}
               <div className="grid grid-cols-2 gap-3">
                 <button onClick={() => handleNavigate("generator")} className="flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-4 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-600 transition">{t.btn_generate}</button>
                 <button onClick={() => handleNavigate("brandlab")} className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">{t.btn_brandlab}</button>
               </div>
-<div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
-  <button
-    type="button"
-    onClick={connectFacebook}
-    className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition"
-  >
-    🔗 Połącz z Facebook
-  </button>
-</div>
-              <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-bold text-slate-900">
-                      Connect Meta
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      Connect Facebook to publish posts later.
-                    </p>
-                  </div>
 
-                  <button
-                    type="button"
-                    onClick={connectFacebook}
-                    className="shrink-0 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition"
-                  >
-                    Połącz z Facebook
-                  </button>
+              {/* Facebook connect — ONE banner */}
+              <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-bold text-slate-900">{t.fb_connect}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{t.fb_hint}</p>
                 </div>
+                <button onClick={connectFacebook} className="shrink-0 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition">
+                  🔗 Facebook
+                </button>
               </div>
 
+              {/* Growth stats */}
               <div className="rounded-2xl border border-slate-100 bg-white p-5">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">{t.brand_grows}</p>
@@ -1273,7 +1052,7 @@ setRewriteError(String(t.conn_err));
                 </div>
               </div>
 
-              {/* Posting languages quick display */}
+              {/* Posting languages */}
               <div className="rounded-2xl border border-slate-100 bg-white p-4">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">{t.lang_posting}</p>
@@ -1282,8 +1061,7 @@ setRewriteError(String(t.conn_err));
                       <button key={l} onClick={() => {
                         const next = postLangs.includes(l) ? postLangs.filter(x => x !== l) : [...postLangs, l];
                         setPostLangs(next); try { localStorage.setItem("digin_post_langs", JSON.stringify(next)); } catch {}
-                      }}
-                        className={`rounded-lg px-2.5 py-1 text-xs font-semibold border transition ${postLangs.includes(l) ? "bg-slate-800 text-white border-slate-800" : "bg-white border-slate-200 text-slate-400 hover:border-slate-400"}`}>
+                      }} className={`rounded-lg px-2.5 py-1 text-xs font-semibold border transition ${postLangs.includes(l) ? "bg-slate-800 text-white border-slate-800" : "bg-white border-slate-200 text-slate-400 hover:border-slate-400"}`}>
                         {LANG_FLAGS[l]} {l.toUpperCase()}
                       </button>
                     ))}
@@ -1292,6 +1070,7 @@ setRewriteError(String(t.conn_err));
                 <p className="text-xs text-slate-400 mt-1">{t.lang_posting_hint}</p>
               </div>
 
+              {/* Recent drafts */}
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">{t.recent_drafts}</p>
@@ -1362,7 +1141,7 @@ setRewriteError(String(t.conn_err));
                     <select value={generatorForm.type} onChange={(e) => setGeneratorForm((p) => ({ ...p, type: e.target.value as GeneratorForm["type"] }))} className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition">
                       <option>Sales post</option><option>Educational</option><option>Storytelling</option>
                     </select></div>
-                  <div><label className="mb-1.5 block text-sm font-medium text-slate-700">{String(t.gen_topic)}</label>
+                  <div><label className="mb-1.5 block text-sm font-medium text-slate-700">{t.gen_topic}</label>
                     <input value={generatorForm.topic} onChange={(e) => setGeneratorForm((p) => ({ ...p, topic: e.target.value }))} placeholder={String(t.gen_topic_ph)} className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition" /></div>
                   <div><label className="mb-1.5 block text-sm font-medium text-slate-700">{t.gen_tone}</label>
                     <select value={tone} onChange={(e) => setTone(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition">
@@ -1385,7 +1164,6 @@ setRewriteError(String(t.conn_err));
                   {copyMessage && <p className="text-sm text-emerald-600">{copyMessage}</p>}
                   {saveMessage && <p className="text-sm text-emerald-600">{saveMessage}</p>}
                 </div>
-
                 <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
                   <div className="flex items-center justify-between mb-4">
                     <div><p className="text-xs font-semibold uppercase tracking-wider text-slate-400">{t.gen_output}</p><h3 className="text-lg font-bold text-slate-900">{t.gen_output_title}</h3></div>
@@ -1449,7 +1227,7 @@ setRewriteError(String(t.conn_err));
                     </div>
                   </div>
                   <div className="grid grid-cols-7 gap-1 mb-1">
-                    {(t.cal_days as unknown as string[]).map((d: string, i: number) => <div key={i} className="py-2 text-center text-xs font-semibold text-slate-400">{d}</div>)}
+                    {(t.cal_days as string[]).map((d: string, i: number) => <div key={i} className="py-2 text-center text-xs font-semibold text-slate-400">{d}</div>)}
                   </div>
                   <div className="grid grid-cols-7 gap-1">
                     {calendarDays.map((day, index) => {
@@ -1467,7 +1245,7 @@ setRewriteError(String(t.conn_err));
                 </div>
                 <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
                   <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">{t.cal_selected}</p>
-                  <h3 className="font-bold text-slate-900 mb-4">{selectedDate ? selectedDate.toLocaleDateString(t.cal_locale, { weekday: "long", month: "long", day: "numeric" }) : t.cal_choose}</h3>
+                  <h3 className="font-bold text-slate-900 mb-4">{selectedDate ? selectedDate.toLocaleDateString(String(t.cal_locale), { weekday: "long", month: "long", day: "numeric" }) : t.cal_choose}</h3>
                   {postsForSelectedDate.length > 0 ? (
                     <div className="space-y-3">
                       {postsForSelectedDate.map((post) => (
@@ -1561,11 +1339,7 @@ setRewriteError(String(t.conn_err));
                     <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-50 pt-3">
                       <div>
                         <span className="text-xs text-slate-400">{t.drafts_created} {formatDateTime(post.created_at, String(t.cal_locale))}</span>
-                        {post.scheduled_for && (
-  <span className="ml-3 text-xs text-emerald-600">
-    📅 {formatDateTime(post.scheduled_for, String(t.cal_locale))}
-  </span>
-)}
+                        {post.scheduled_for && <span className="ml-3 text-xs text-emerald-600">📅 {formatDateTime(post.scheduled_for, String(t.cal_locale))}</span>}
                       </div>
                       <div className="flex gap-2">
                         <button onClick={() => handleCopy(post.content)} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">{t.drafts_copy}</button>
@@ -1587,7 +1361,6 @@ setRewriteError(String(t.conn_err));
                 <button onClick={() => handleNavigate("dashboard")} className="lg:hidden text-slate-400">‹</button>
                 <div><h2 className="text-xl font-bold text-slate-900">{t.lab_title}</h2><p className="text-sm text-slate-500">{t.lab_subtitle}</p></div>
               </div>
-
               <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white text-xs font-bold">1</span>
@@ -1596,7 +1369,7 @@ setRewriteError(String(t.conn_err));
                 <p className="text-xs text-slate-400 mb-4 pl-8">{t.lab_step1_hint}</p>
                 <textarea value={analyzePosts} onChange={(e) => setAnalyzePosts(e.target.value)} placeholder={String(t.lab_step1_ph)} rows={8} className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition font-mono" />
                 <div className="flex items-center justify-between mt-2 mb-4">
-                  <p className="text-xs text-slate-400">{analyzePostList.length} {String(t.lab_posts_detected)}</p>
+                  <p className="text-xs text-slate-400">{analyzePostList.length} {t.lab_posts_detected}</p>
                   {analyzeError && <p className="text-xs text-red-500">{analyzeError}</p>}
                 </div>
                 <button onClick={handleAnalyzeDNA} disabled={loadingAnalyze || analyzePostList.length < 2} className="w-full rounded-xl bg-emerald-500 py-3.5 text-sm font-semibold text-white hover:bg-emerald-600 transition disabled:opacity-50 disabled:cursor-not-allowed">
@@ -1695,8 +1468,6 @@ setRewriteError(String(t.conn_err));
     </div>
   );
 }
-
-// ─── Utils ────────────────────────────────────────────────────────────────────
 
 function formatDateTime(dateString: string, locale: string) {
   const date = new Date(dateString);
