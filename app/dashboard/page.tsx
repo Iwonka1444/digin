@@ -1446,9 +1446,9 @@ setRewriteError(String(t.conn_err));
               <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
                 <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm space-y-4">
                   <div><label className="mb-1.5 block text-sm font-medium text-slate-700">{t.eng_post_label}</label>
-                    <textarea value={engagementPost} onChange={(e) => setEngagementPost(e.target.value)} placeholder={t.eng_post_ph} rows={5} className="w-full resize-none rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none focus:border-emerald-400 transition" /></div>
+                    <textarea value={engagementPost} onChange={(e) => setEngagementPost(e.target.value)} placeholder={String(t.eng_post_ph)} rows={5} className="w-full resize-none rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none focus:border-emerald-400 transition" /></div>
                   <div><label className="mb-1.5 block text-sm font-medium text-slate-700">{t.eng_ctx_label}</label>
-                    <input value={engagementContext} onChange={(e) => setEngagementContext(e.target.value)} placeholder={t.eng_ctx_ph} className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none focus:border-emerald-400 transition" /></div>
+                    <input value={engagementContext} onChange={(e) => setEngagementContext(e.target.value)} placeholder={String(t.eng_ctx_ph)} className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none focus:border-emerald-400 transition" /></div>
                   <button onClick={handleGenerateEngagement} disabled={loadingEngagement} className="w-full rounded-xl bg-emerald-500 py-3.5 text-sm font-semibold text-white hover:bg-emerald-600 disabled:opacity-50">
                     {loadingEngagement ? t.eng_loading : t.eng_btn}
                   </button>
