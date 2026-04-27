@@ -5,8 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 function normalizeOutput(text: string) {
   return text
     .replace(/\r\n/g, "\n")
-    .replace(/\n{3,}/g, "\n\n")
     .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
 
@@ -24,6 +24,17 @@ function getVisualStyleLabel(style?: string | null) {
 
   if (!style) return "not specified";
   return map[style] || style;
+}
+
+function cleanBadStarts(text: string) {
+  return text
+    .replace(/^🚀\s*/g, "")
+    .replace(/^🎉\s*/g, "")
+    .replace(/^Unlock your potential[:!,.]?\s*/gi, "")
+    .replace(/^Take your business to the next level[:!,.]?\s*/gi, "")
+    .replace(/^Zrób krok w stronę sukcesu[:!,.]?\s*/gi, "")
+    .replace(/^Rozwiń swój biznes[:!,.]?\s*/gi, "")
+    .trim();
 }
 
 export async function POST(req: Request) {
@@ -70,22 +81,34 @@ export async function POST(req: Request) {
       apiKey: process.env.OPENAI_API_KEY,
     });
 
-    // STEP 1: zamienia słaby temat usera w dobry marketing angle
     const topicRewritePrompt = `
-Rewrite this raw user topic into a strong marketing angle.
+You transform weak user topics into strong customer-focused marketing angles.
 
-The user may write something simple like:
+IMPORTANT:
+- Detect the language of the raw topic.
+- Return the improved angle in the SAME language as the raw topic.
+- If the raw topic is Polish, return Polish.
+- If the raw topic is English, return English.
+- If the raw topic is Dutch, return Dutch.
+
+Bad raw topics:
 "25% discount"
-"new website offer"
-"logo promotion"
-"social media service"
+"promocja 25%"
+"new website"
+"logo"
+"social media"
 
-Your job:
-- find the real customer problem behind it
-- make it about the customer, not the brand
-- make it emotional, specific and relatable
-- do NOT write a post yet
-- return only one rewritten topic sentence
+Good improved angles:
+- "Masz stronę, ale nadal nie dostajesz zapytań od klientów."
+- "Twoja marka wygląda przypadkowo, więc ludzie nie wiedzą, czy mogą Ci zaufać."
+- "Publikujesz w social mediach, ale nic z tego nie wynika."
+
+Rules:
+- Make it about the customer's real problem.
+- Do NOT mention discounts in the angle.
+- Do NOT use motivational language.
+- Do NOT use emojis.
+- Return only ONE sentence.
 
 Raw topic:
 ${topic || "general brand promotion"}
@@ -97,24 +120,27 @@ ${topic || "general brand promotion"}
         {
           role: "system",
           content:
-            "You transform weak marketing topics into strong customer-focused angles.",
+            "You rewrite weak marketing inputs into strong, customer-problem angles.",
         },
         { role: "user", content: topicRewritePrompt },
       ],
-      temperature: 0.7,
+      temperature: 0.45,
       max_tokens: 80,
     });
 
-    const rewrittenTopic =
-      topicRewriteResponse.choices?.[0]?.message?.content?.trim() ||
-      topic ||
-      "helping customers understand why their online presence is not bringing clients";
+    const rewrittenTopic = normalizeOutput(
+      topicRewriteResponse.choices?.[0]?.message?.content ||
+        "Masz ofertę, ale ludzie nie widzą powodu, żeby się odezwać."
+    );
 
-    // STEP 2: generuje właściwy post
     const prompt = `
-You are a high-performing social media copywriter.
+You are a conversion-focused social media copywriter.
 
-Write like a human. Not like AI. Not like a corporate brand.
+Write a ${type} post for ${platform}.
+
+LANGUAGE RULE:
+- Write the final post in the SAME language as the original user topic.
+- Original topic: "${topic || "general brand promotion"}"
 
 Brand:
 - Company: ${brandProfile.company}
@@ -125,94 +151,92 @@ Brand:
 - Brand colors: ${brandColors}
 - Visual style: ${visualStyle}
 
-Use the brand colors and visual style as inspiration for the mood, word choice and vibe.
-
-Task:
-Write a ${type} post for ${platform}.
-
-Write like someone who understands real clients, not marketing theory.
-Avoid sounding like an ad. Sound like a real observation.
-
 Original user topic:
 ${topic || "general brand promotion"}
 
 Improved marketing angle:
 ${rewrittenTopic}
-This angle MUST define the entire post.
-Do NOT ignore it.
-The post must be clearly based on this situation.
-This angle MUST be used as the exact first line (rephrased naturally if needed).
-If the post does not clearly reflect this angle, it is wrong.
 
-STRICT RULES:
-- DO NOT start with emojis
-- DO NOT start with a question
-- DO NOT mention discounts, promotions, or offers in the first 2 lines
-- NEVER write like a promotion or announcement
-- NEVER start with discounts, offers, or "only X people"
-- ALWAYS start from a real pain, frustration, or situation
-- Make the reader feel: "this is about me"
-- NO generic marketing phrases like: "key to success", "grow your business", "contact us today", "unlock your potential", "take your brand to the next level"
-- NO corporate tone
-- NO empty motivational slogans
-- NO fake excitement
-- NO long intros
-- Write like a real person talking
-- Keep it simple, direct, slightly emotional
-- Mix short and medium sentences
-- Write in compact paragraphs
-- Do not create big empty spaces
-- Do not put every sentence on a separate line
-- Use maximum 2 paragraphs before CTA
-- Each paragraph should have 2–3 sentences
-- Only the hook may be a single line
-- CTA must be soft and natural, not pushy
-- Avoid phrases like: "you are not alone", "transform your business", "take it to the next level", "this is more than"
-- Be specific instead of generic
-- Show what actually happens (real situations, not descriptions)
+VERY IMPORTANT:
+The post MUST be based on the improved marketing angle.
+Do not start with a discount.
+Do not start with an offer.
+Do not start with emoji.
+Do not start with a generic slogan.
+
+BANNED PHRASES:
+- unlock your potential
+- elevate your business
+- achieve your dreams
+- take your business to the next level
+- shine bright
+- stand out in a crowded market
+- now is the perfect time
+- don't miss this opportunity
+- zrób krok w stronę sukcesu
+- rozwiń swój biznes
+- transformacja Twojego biznesu
+- skontaktuj się z nami już dziś
+- nie przegap okazji
+- Twoja firma zasługuje na najlepsze
+
+STYLE:
+- Human, direct, simple.
+- No corporate tone.
+- No fake excitement.
+- No motivational slogans.
+- No big empty spacing.
+- Compact paragraphs.
+- Do not put every sentence on a new line.
+- The hook can be one line.
+- Body should be 1–2 compact paragraphs.
+- CTA should be soft and natural.
+
+CONTENT LOGIC:
+1. Start with the real customer problem.
+2. Show what happens in real life.
+3. Explain why it matters.
+4. Introduce the offer naturally.
+5. CTA: one short natural action.
 
 Platform style:
 ${
   platform === "Instagram"
-    ? "- emotional, visual, relatable, can use 1–2 emojis max"
+    ? "- visual, relatable, emotional, max 1 emoji if needed"
     : platform === "LinkedIn"
     ? "- professional but human, no emojis"
-    : "- conversational, natural, community-driven"
+    : "- conversational, simple, community-driven"
 }
 
 Post type:
 ${
   type === "Sales post"
-    ? "- show problem, tension, solution and subtle CTA"
+    ? "- problem → tension → solution → soft CTA"
     : type === "Educational"
-    ? "- teach one specific thing clearly and simply"
-    : "- tell a short real-feeling story with a beginning, tension and resolution"
+    ? "- teach one useful thing clearly"
+    : "- tell a short realistic story"
 }
 
 Tone override:
-${tone === "default" ? "- use brand tone" : `- ${tone}`}
+${tone === "default" ? "- use the brand tone" : `- ${tone}`}
 
 Length:
 ${
   length === "short"
-    ? "- very short: hook + 1 paragraph + CTA"
+    ? "- short: hook + 1 compact paragraph + CTA"
     : length === "long"
     ? "- longer: hook + 2 compact paragraphs + CTA"
     : "- medium: hook + 1–2 compact paragraphs + CTA"
 }
 
-Structure:
-- First line MUST be a direct restatement of the improved marketing angle (no emojis, no questions, no offers)
-- Paragraph 1: show what is going wrong in real life (2–3 sentences)
-- Paragraph 2: explain why it happens and connect to the offer (2–3 sentences)
-- Final line: soft CTA
+Hashtags:
 ${
   includeHashtags
-    ? "- Add hashtags in ONE final line only, max 5 hashtags"
-    : "- No hashtags"
+    ? "- Add one final line with max 5 relevant hashtags."
+    : "- Do not add hashtags."
 }
 
-Write ONLY the post. No explanation.
+Write ONLY the post.
 `;
 
     const response = await openai.chat.completions.create({
@@ -221,27 +245,36 @@ Write ONLY the post. No explanation.
         {
           role: "system",
           content:
-            "You write social media posts that convert into real client interest, not just likes.",
+            "You write social posts that create client interest. You avoid generic advertising language.",
         },
         { role: "user", content: prompt },
       ],
-      temperature: 0.85,
-      max_tokens: length === "short" ? 140 : length === "long" ? 650 : 400,
+      temperature: 0.72,
+      max_tokens: length === "short" ? 160 : length === "long" ? 650 : 420,
     });
 
     const rawOutput =
       response.choices?.[0]?.message?.content ?? "No response from model.";
 
-  const cleaned = normalizeOutput(rawOutput)
-  .replace(/\n{3,}/g, "\n\n")
-  .trim();
+    const cleaned = cleanBadStarts(normalizeOutput(rawOutput));
 
-// 🔥 FORCE FIRST LINE FROM REWRITTEN TOPIC
-const firstLine = rewrittenTopic.charAt(0).toUpperCase() + rewrittenTopic.slice(1);
+    const firstLine =
+      rewrittenTopic.charAt(0).toUpperCase() + rewrittenTopic.slice(1);
 
-const output = `${firstLine}\n\n${cleaned}`;
+    const cleanedWithoutDuplicate = cleaned
+      .replace(firstLine, "")
+      .replace(rewrittenTopic, "")
+      .trim();
 
-    return NextResponse.json({ output });
+    const output = normalizeOutput(`${firstLine}\n\n${cleanedWithoutDuplicate}`);
+
+    return NextResponse.json({
+      output,
+      debug: {
+        originalTopic: topic,
+        rewrittenTopic,
+      },
+    });
   } catch (error) {
     console.error(error);
     return NextResponse.json(
