@@ -21,12 +21,35 @@ type GeneratedPost = {
   media_url?: string | null;
 };
 
-type ViewType = "dashboard" | "generator" | "calendar" | "engagement" | "drafts";
+type ViewType = "dashboard" | "generator" | "calendar" | "engagement" | "drafts" | "brandlab";
 
 type GeneratorForm = {
   platform: "Instagram" | "Facebook" | "LinkedIn";
   type: "Sales post" | "Educational" | "Storytelling";
   topic: string;
+};
+
+type BrandDNA = {
+  tone: string;
+  energy: string;
+  structure: string;
+  cta: string;
+  consistency: string;
+  language: string;
+  avgLength: string;
+  usesEmoji: boolean;
+  dominantStyle: string;
+  score: number;
+  mode: "shadow" | "upgrade";
+  strengths: string[];
+  weaknesses: string[];
+  recommendation: string;
+};
+
+type RewriteVariant = {
+  label: string;
+  description: string;
+  content: string;
 };
 
 // ─── Growth Levels 0–7 ───────────────────────────────────────────────────────
@@ -42,7 +65,7 @@ const GROWTH_LEVELS = [
   { level: 7, name: "Ogród marki",    emoji: "🌻", description: "Pierwsza kampania. Brawo!" },
 ];
 
-// ─── Challenges per Level ─────────────────────────────────────────────────────
+// ─── Challenges ───────────────────────────────────────────────────────────────
 
 type Challenge = {
   id: string;
@@ -67,11 +90,11 @@ const LEVEL_DATA: Record<number, LevelData> = {
     reward: "Twoja marka została zasadzona 🌰",
     encouragement: "Mały krok = progres. To wystarczy na dziś.",
     challenges: [
-      { id: "c_company",  label: "Wpisz nazwę firmy",              hint: "Jak się nazywa Twoja marka?",                       action: "dashboard", check: (_, p) => !!p?.company },
-      { id: "c_industry", label: "Wybierz branżę",                 hint: "W jakiej dziedzinie działasz?",                    action: "dashboard", check: (_, p) => !!p?.industry },
-      { id: "c_tone",     label: "Wybierz ton komunikacji",        hint: "Jak mówi Twoja marka?",                            action: "dashboard", check: (_, p) => !!p?.tone },
-      { id: "c_offer",    label: "Opisz ofertę jednym zdaniem",    hint: "Co oferujesz swoim klientom?",                     action: "dashboard", check: (_, p) => !!p?.offer },
-      { id: "c_audience", label: "Opisz swojego klienta",          hint: "Do kogo kierujesz swoją markę?",                   action: "dashboard", check: (_, p) => !!p?.audience },
+      { id: "c_company",  label: "Wpisz nazwę firmy",           hint: "Jak się nazywa Twoja marka?",       action: "dashboard", check: (_, p) => !!p?.company },
+      { id: "c_industry", label: "Wybierz branżę",              hint: "W jakiej dziedzinie działasz?",     action: "dashboard", check: (_, p) => !!p?.industry },
+      { id: "c_tone",     label: "Wybierz ton komunikacji",     hint: "Jak mówi Twoja marka?",             action: "dashboard", check: (_, p) => !!p?.tone },
+      { id: "c_offer",    label: "Opisz ofertę jednym zdaniem", hint: "Co oferujesz swoim klientom?",      action: "dashboard", check: (_, p) => !!p?.offer },
+      { id: "c_audience", label: "Opisz swojego klienta",       hint: "Do kogo kierujesz swoją markę?",   action: "dashboard", check: (_, p) => !!p?.audience },
     ],
   },
   1: {
@@ -80,9 +103,9 @@ const LEVEL_DATA: Record<number, LevelData> = {
     reward: "Masz pierwszy szkic. DiGin zaczyna rosnąć 🌱",
     encouragement: "Dzisiaj wystarczy jeden draft.",
     challenges: [
-      { id: "c_platform", label: "Wybierz platformę",              hint: "Instagram, Facebook czy LinkedIn?",                action: "generator", check: (_, __, ui) => ui.has("platform_chosen") },
-      { id: "c_generate", label: "Wygeneruj pierwszy pomysł",      hint: "Nie musi być idealny — po prostu zacznij",         action: "generator", check: (posts) => posts.length >= 1 },
-      { id: "c_draft",    label: "Zapisz pierwszy draft",          hint: "Kliknij 'Zapisz do kalendarza' w generatorze",     action: "generator", check: (posts) => posts.length >= 1 },
+      { id: "c_platform", label: "Wybierz platformę",           hint: "Instagram, Facebook czy LinkedIn?",            action: "generator", check: (_, __, ui) => ui.has("platform_chosen") },
+      { id: "c_generate", label: "Wygeneruj pierwszy pomysł",   hint: "Nie musi być idealny — po prostu zacznij",     action: "generator", check: (posts) => posts.length >= 1 },
+      { id: "c_draft",    label: "Zapisz pierwszy draft",       hint: "Kliknij 'Zapisz do kalendarza'",              action: "generator", check: (posts) => posts.length >= 1 },
     ],
   },
   2: {
@@ -91,9 +114,9 @@ const LEVEL_DATA: Record<number, LevelData> = {
     reward: "Twoja marka ma już swój głos 🪴",
     encouragement: "Nie musisz robić wszystkiego dziś.",
     challenges: [
-      { id: "c_variants",  label: "Wypróbuj 3 różne warianty posta",       hint: "Zmień ton lub typ i kliknij Generuj ponownie",   action: "generator", check: (_, __, ui) => ui.has("three_variants") },
-      { id: "c_posts3",    label: "Zapisz 3 drafty do biblioteki",          hint: "Buduj swoją bibliotekę treści",                  action: "generator", check: (posts) => posts.length >= 3 },
-      { id: "c_review",    label: "Przejrzyj drafty i wybierz najlepszy",   hint: "Wejdź w Drafty i oceń co wygenerowałeś",        action: "drafts",    check: (_, __, ui) => ui.has("drafts_reviewed") },
+      { id: "c_variants", label: "Wypróbuj 3 różne warianty posta",      hint: "Zmień ton lub typ i kliknij Generuj ponownie",  action: "generator", check: (_, __, ui) => ui.has("three_variants") },
+      { id: "c_posts3",   label: "Zapisz 3 drafty do biblioteki",         hint: "Buduj swoją bibliotekę treści",                 action: "generator", check: (posts) => posts.length >= 3 },
+      { id: "c_dna",      label: "Przeanalizuj DNA swojej marki",         hint: "Wejdź w Brand Lab i wklej swoje posty",         action: "brandlab",  check: (_, __, ui) => ui.has("dna_analyzed") },
     ],
   },
   3: {
@@ -102,9 +125,9 @@ const LEVEL_DATA: Record<number, LevelData> = {
     reward: "Pierwszy post gotowy 🌿",
     encouragement: "Jeden post to już wystarczająco dużo.",
     challenges: [
-      { id: "c_schedule1", label: "Wybierz godzinę publikacji",    hint: "Zaplanuj kiedy post ma wyjść",                     action: "calendar",  check: (posts) => posts.filter((p) => p.scheduled_for).length >= 1 },
-      { id: "c_media",     label: "Dodaj zdjęcie do posta",        hint: "Posty ze zdjęciem mają 2x więcej zasięgów",        action: "generator", check: (posts) => posts.some((p) => !!p.media_url) },
-      { id: "c_ready",     label: "Oznacz post jako gotowy",       hint: "Kliknij 'Zapisz do kalendarza' — to Twój krok",   action: "generator", check: (posts) => posts.filter((p) => p.scheduled_for).length >= 1 },
+      { id: "c_schedule1", label: "Wybierz godzinę publikacji",  hint: "Zaplanuj kiedy post ma wyjść",               action: "calendar",  check: (posts) => posts.filter((p) => p.scheduled_for).length >= 1 },
+      { id: "c_media",     label: "Dodaj zdjęcie do posta",      hint: "Posty ze zdjęciem mają 2x więcej zasięgów",  action: "generator", check: (posts) => posts.some((p) => !!p.media_url) },
+      { id: "c_rewrite",   label: "Użyj 'Rewrite me better'",    hint: "Brand Lab → wklej post → 3 wersje",          action: "brandlab",  check: (_, __, ui) => ui.has("rewrite_used") },
     ],
   },
   4: {
@@ -113,20 +136,20 @@ const LEVEL_DATA: Record<number, LevelData> = {
     reward: "Budujesz rytm. Brawo! 🌳",
     encouragement: "Twoja marka chwilę odpoczywa? Wróć z jednym małym krokiem.",
     challenges: [
-      { id: "c_posts6",   label: "Przygotuj 6 postów w bibliotece",  hint: "Masz materiał na 3 tygodnie przy 2 postach/tydzień", action: "generator", check: (posts) => posts.length >= 6 },
-      { id: "c_edu",      label: "Wygeneruj post edukacyjny",         hint: "Typ 'Educational' — ucz i buduj autorytet",          action: "generator", check: (_, __, ui) => ui.has("educational_generated") },
-      { id: "c_sales",    label: "Wygeneruj post sprzedażowy",        hint: "Typ 'Sales post' — pokaż co oferujesz",              action: "generator", check: (_, __, ui) => ui.has("sales_generated") },
+      { id: "c_posts6",  label: "Przygotuj 6 postów w bibliotece",  hint: "Materiał na 3 tygodnie przy 2 postach/tydzień",  action: "generator", check: (posts) => posts.length >= 6 },
+      { id: "c_edu",     label: "Wygeneruj post edukacyjny",         hint: "Typ 'Educational' — ucz i buduj autorytet",      action: "generator", check: (_, __, ui) => ui.has("educational_generated") },
+      { id: "c_sales",   label: "Wygeneruj post sprzedażowy",        hint: "Typ 'Sales post' — pokaż co oferujesz",          action: "generator", check: (_, __, ui) => ui.has("sales_generated") },
     ],
   },
   5: {
     title: "Level 5 — Content Week",
-    subtitle: "Zaplanuj cały tydzień. Poczujesz kontrolę — obiecujemy.",
+    subtitle: "Zaplanuj cały tydzień. Poczujesz kontrolę.",
     reward: "Twój tydzień marketingowy gotowy 🌸",
     encouragement: "Nakarm swoją markę jednym małym krokiem.",
     challenges: [
-      { id: "c_sched3",   label: "Zaplanuj 3 posty w kalendarzu",   hint: "Rozkładaj posty na różne dni tygodnia",             action: "calendar",  check: (posts) => posts.filter((p) => p.scheduled_for).length >= 3 },
-      { id: "c_posts10",  label: "Osiągnij 10 postów w bibliotece", hint: "Regularność buduje markę",                          action: "generator", check: (posts) => posts.length >= 10 },
-      { id: "c_story",    label: "Opowiedz historię marki",         hint: "Typ 'Storytelling' — ludzie kupują od ludzi",        action: "generator", check: (_, __, ui) => ui.has("storytelling_generated") },
+      { id: "c_sched3",  label: "Zaplanuj 3 posty w kalendarzu",   hint: "Rozkładaj posty na różne dni",             action: "calendar",  check: (posts) => posts.filter((p) => p.scheduled_for).length >= 3 },
+      { id: "c_posts10", label: "Osiągnij 10 postów w bibliotece", hint: "Regularność buduje markę",                 action: "generator", check: (posts) => posts.length >= 10 },
+      { id: "c_story",   label: "Opowiedz historię marki",         hint: "Typ 'Storytelling' — ludzie kupują od ludzi", action: "generator", check: (_, __, ui) => ui.has("storytelling_generated") },
     ],
   },
   6: {
@@ -135,9 +158,9 @@ const LEVEL_DATA: Record<number, LevelData> = {
     reward: "Twoja marka zaczyna rozmawiać 🌺",
     encouragement: "Mały krok = progres. Jeden komentarz zmienia dużo.",
     challenges: [
-      { id: "c_engage1",  label: "Wygeneruj komentarze do postów",  hint: "Skorzystaj z narzędzia Engagement",                  action: "engagement", check: (_, __, ui) => ui.has("engagement_used") },
-      { id: "c_engage2",  label: "Wygeneruj pomysły na odpowiedzi", hint: "Reagowanie u innych buduje zasięg organiczny",        action: "engagement", check: (_, __, ui) => ui.has("engagement_ideas") },
-      { id: "c_sched5",   label: "Miej 5 postów zaplanowanych",     hint: "Stały rytm = rosnąca marka",                          action: "calendar",   check: (posts) => posts.filter((p) => p.scheduled_for).length >= 5 },
+      { id: "c_engage1", label: "Wygeneruj komentarze do postów",  hint: "Skorzystaj z narzędzia Engagement",         action: "engagement", check: (_, __, ui) => ui.has("engagement_used") },
+      { id: "c_engage2", label: "Wygeneruj pomysły na odpowiedzi", hint: "Reagowanie u innych buduje zasięg",          action: "engagement", check: (_, __, ui) => ui.has("engagement_ideas") },
+      { id: "c_sched5",  label: "Miej 5 postów zaplanowanych",     hint: "Stały rytm = rosnąca marka",                action: "calendar",   check: (posts) => posts.filter((p) => p.scheduled_for).length >= 5 },
     ],
   },
   7: {
@@ -146,9 +169,9 @@ const LEVEL_DATA: Record<number, LevelData> = {
     reward: "Pierwsza kampania gotowa. Jesteś DiGin Legend 🌻",
     encouragement: "Twoja marka urosła. Czas zbudować ogród.",
     challenges: [
-      { id: "c_posts20",  label: "Osiągnij 20 postów w bibliotece",  hint: "Budujesz prawdziwe archiwum treści",                 action: "generator", check: (posts) => posts.length >= 20 },
-      { id: "c_sched10",  label: "Zaplanuj 10 postów w kalendarzu",  hint: "Dwa tygodnie zaplanowanego contentu 🔥",             action: "calendar",  check: (posts) => posts.filter((p) => p.scheduled_for).length >= 10 },
-      { id: "c_media5",   label: "Dodaj zdjęcia do 5 postów",        hint: "Wizualny content = wyższy zasięg każdym razem",      action: "generator", check: (posts) => posts.filter((p) => !!p.media_url).length >= 5 },
+      { id: "c_posts20",  label: "Osiągnij 20 postów w bibliotece",  hint: "Budujesz prawdziwe archiwum treści",       action: "generator", check: (posts) => posts.length >= 20 },
+      { id: "c_sched10",  label: "Zaplanuj 10 postów w kalendarzu",  hint: "Dwa tygodnie zaplanowanego contentu 🔥",   action: "calendar",  check: (posts) => posts.filter((p) => p.scheduled_for).length >= 10 },
+      { id: "c_media5",   label: "Dodaj zdjęcia do 5 postów",        hint: "Wizualny content = wyższy zasięg",         action: "generator", check: (posts) => posts.filter((p) => !!p.media_url).length >= 5 },
     ],
   },
 };
@@ -159,8 +182,7 @@ function computeCurrentLevel(posts: GeneratedPost[], profile: BrandProfile | nul
   for (let lvl = 0; lvl <= 7; lvl++) {
     const data = LEVEL_DATA[lvl];
     if (!data || data.challenges.length === 0) continue;
-    const allDone = data.challenges.every((c) => c.check(posts, profile, ui));
-    if (!allDone) return lvl;
+    if (!data.challenges.every((c) => c.check(posts, profile, ui))) return lvl;
   }
   return 7;
 }
@@ -196,7 +218,49 @@ function markActivityToday() {
   } catch {}
 }
 
-// ─── Challenge Alert Component ────────────────────────────────────────────────
+// ─── Brand Lab helpers ────────────────────────────────────────────────────────
+
+const MODE_CONFIG = {
+  shadow: {
+    label: "Shadow Mode",
+    emoji: "🔮",
+    headline: "Twoja marka jest silna",
+    desc: "AI dopasowuje się do Twojego stylu i subtelnie go wzmacnia.",
+    bgClass: "bg-emerald-50 border-emerald-200",
+    badgeClass: "bg-emerald-500 text-white",
+  },
+  upgrade: {
+    label: "Upgrade Mode",
+    emoji: "🚀",
+    headline: "Zauważyliśmy potencjał",
+    desc: "Pomożemy Ci wzmocnić i uporządkować komunikację — krok po kroku.",
+    bgClass: "bg-amber-50 border-amber-200",
+    badgeClass: "bg-amber-500 text-white",
+  },
+};
+
+function ScoreRing({ score }: { score: number }) {
+  const color = score >= 70 ? "#10b981" : score >= 50 ? "#f59e0b" : "#ef4444";
+  const r = 36;
+  const circ = 2 * Math.PI * r;
+  const dash = (score / 100) * circ;
+  return (
+    <div className="relative flex items-center justify-center">
+      <svg width="88" height="88" viewBox="0 0 88 88">
+        <circle cx="44" cy="44" r={r} fill="none" stroke="#e2e8f0" strokeWidth="8" />
+        <circle cx="44" cy="44" r={r} fill="none" stroke={color} strokeWidth="8"
+          strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" transform="rotate(-90 44 44)"
+          style={{ transition: "stroke-dasharray 1s ease" }} />
+      </svg>
+      <div className="absolute text-center">
+        <p className="text-xl font-bold text-slate-900">{score}</p>
+        <p className="text-[10px] text-slate-400 leading-none">/ 100</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Challenge Alert ──────────────────────────────────────────────────────────
 
 function ChallengeAlert({ posts, profile, currentLevel, ui, onNavigate }: {
   posts: GeneratedPost[];
@@ -209,7 +273,6 @@ function ChallengeAlert({ posts, profile, currentLevel, ui, onNavigate }: {
   const { drops, resting } = getStreakState();
   if (!data) return null;
 
-  // Max level complete
   if (currentLevel === 7 && data.challenges.every((c) => c.check(posts, profile, ui))) {
     return (
       <div className="rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50 p-5">
@@ -231,7 +294,6 @@ function ChallengeAlert({ posts, profile, currentLevel, ui, onNavigate }: {
 
   return (
     <div className="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-green-50 to-emerald-50 p-5 shadow-sm">
-      {/* Header */}
       <div className="flex items-start justify-between mb-1">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-0.5">
@@ -243,27 +305,21 @@ function ChallengeAlert({ posts, profile, currentLevel, ui, onNavigate }: {
         <span className="text-xs font-bold text-white bg-emerald-500 rounded-full px-2.5 py-1 shrink-0 ml-2">{doneCount}/{results.length}</span>
       </div>
 
-      {/* Resting message */}
       {resting && (
         <div className="mt-3 mb-1 rounded-xl bg-emerald-100/60 px-3 py-2 text-xs text-emerald-700 font-medium">
           🌿 Twoja marka chwilę odpoczywa. Wróć z jednym małym krokiem.
         </div>
       )}
 
-      {/* Progress bar */}
       <div className="mt-3 mb-4 h-2 w-full rounded-full bg-emerald-100">
         <div className="h-2 rounded-full bg-emerald-500 transition-all duration-700" style={{ width: `${progressPct}%` }} />
       </div>
 
-      {/* Tasks */}
       <div className="space-y-2">
         {results.map((c) => (
           <div key={c.id}
             onClick={() => { if (!c.done && c.action) onNavigate(c.action); }}
-            className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition ${
-              c.done ? "bg-white/50 cursor-default" : "bg-white border border-emerald-100 hover:border-emerald-300 hover:shadow-sm cursor-pointer active:scale-[0.99]"
-            }`}
-          >
+            className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition ${c.done ? "bg-white/50 cursor-default" : "bg-white border border-emerald-100 hover:border-emerald-300 hover:shadow-sm cursor-pointer active:scale-[0.99]"}`}>
             <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${c.done ? "bg-emerald-500 text-white" : "border-2 border-emerald-200"}`}>
               {c.done ? "✓" : ""}
             </div>
@@ -276,10 +332,9 @@ function ChallengeAlert({ posts, profile, currentLevel, ui, onNavigate }: {
         ))}
       </div>
 
-      {/* Footer: encouragement + streak drops */}
       <div className="mt-4 flex items-center justify-between">
         <p className="text-[11px] text-emerald-600 font-medium italic">{data.encouragement}</p>
-        <div className="flex gap-0.5" title={`${drops} aktywnych dni w tym tygodniu`}>
+        <div className="flex gap-0.5">
           {Array.from({ length: 7 }).map((_, i) => (
             <span key={i} className={`text-sm ${i < drops ? "opacity-100" : "opacity-20"}`}>💧</span>
           ))}
@@ -328,6 +383,18 @@ export default function DashboardPage() {
   const [loadingEngagement, setLoadingEngagement] = useState(false);
   const [engagementError, setEngagementError] = useState("");
 
+  // Brand Lab state
+  const [analyzePosts, setAnalyzePosts] = useState("");
+  const [brandDNA, setBrandDNA] = useState<BrandDNA | null>(null);
+  const [loadingAnalyze, setLoadingAnalyze] = useState(false);
+  const [analyzeError, setAnalyzeError] = useState("");
+  const [rewriteInput, setRewriteInput] = useState("");
+  const [rewriteVariants, setRewriteVariants] = useState<RewriteVariant[]>([]);
+  const [loadingRewrite, setLoadingRewrite] = useState(false);
+  const [rewriteError, setRewriteError] = useState("");
+  const [rewriteMeta, setRewriteMeta] = useState<{ mode: string; userStylePct: number; improvePct: number } | null>(null);
+  const [copiedRewriteIdx, setCopiedRewriteIdx] = useState<number | null>(null);
+
   const [uiCompletions, setUiCompletions] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -338,21 +405,25 @@ export default function DashboardPage() {
   }, []);
 
   function markUiComplete(key: string) {
-    if (uiCompletions.has(key)) return;
-    const next = new Set(uiCompletions);
-    next.add(key);
-    setUiCompletions(next);
-    try { localStorage.setItem("digin_ui_completions", JSON.stringify([...next])); } catch {}
-    markActivityToday();
+    setUiCompletions((prev) => {
+      if (prev.has(key)) return prev;
+      const next = new Set(prev);
+      next.add(key);
+      try { localStorage.setItem("digin_ui_completions", JSON.stringify([...next])); } catch {}
+      markActivityToday();
+      return next;
+    });
   }
 
-  // Auto-track generator type selections
   useEffect(() => {
     markUiComplete("platform_chosen");
+  }, [generatorForm.platform]);
+
+  useEffect(() => {
     if (generatorForm.type === "Educational") markUiComplete("educational_generated");
     if (generatorForm.type === "Sales post") markUiComplete("sales_generated");
     if (generatorForm.type === "Storytelling") markUiComplete("storytelling_generated");
-  }, [generatorForm.platform, generatorForm.type]);
+  }, [generatorForm.type]);
 
   const handleSignOut = async () => {
     const { createClient } = await import("@/lib/supabase/client");
@@ -365,8 +436,8 @@ export default function DashboardPage() {
     try {
       setLoadingProfile(true);
       const res = await fetch("/api/profile", { method: "GET", cache: "no-store" });
-      const contentType = res.headers.get("content-type") || "";
-      if (!contentType.includes("application/json")) return;
+      const ct = res.headers.get("content-type") || "";
+      if (!ct.includes("application/json")) return;
       const json = await res.json();
       if (!res.ok) return;
       if (!json.data) { window.location.href = "/onboarding"; return; }
@@ -379,8 +450,8 @@ export default function DashboardPage() {
       setLoadingPosts(true);
       setPostsError("");
       const res = await fetch("/api/posts", { method: "GET", cache: "no-store" });
-      const contentType = res.headers.get("content-type") || "";
-      if (!contentType.includes("application/json")) { setPostsError("Błąd endpointu."); return; }
+      const ct = res.headers.get("content-type") || "";
+      if (!ct.includes("application/json")) { setPostsError("Błąd endpointu."); return; }
       const json = await res.json();
       if (!res.ok) { setPostsError(json.error || "Błąd ładowania."); return; }
       setPosts(json.data || []);
@@ -419,7 +490,6 @@ export default function DashboardPage() {
       setSavingToCalendar(true);
       setGenerateError("");
       setSaveMessage("");
-
       let finalMediaUrl = mediaUrl.startsWith("http") ? mediaUrl : "";
       if (mediaFile && !finalMediaUrl) {
         setUploadingMedia(true);
@@ -434,7 +504,6 @@ export default function DashboardPage() {
         }
         setUploadingMedia(false);
       }
-
       const scheduledForISO = new Date(scheduledDate).toISOString();
       const res = await fetch("/api/posts", {
         method: "POST",
@@ -487,6 +556,47 @@ export default function DashboardPage() {
     } catch { setEngagementError("Błąd połączenia."); } finally { setLoadingEngagement(false); }
   };
 
+  const handleAnalyzeDNA = async () => {
+    const postList = analyzePosts.split(/\n{2,}/).map((p) => p.trim()).filter((p) => p.length > 20);
+    if (postList.length < 2) { setAnalyzeError("Wklej przynajmniej 2 posty oddzielone pustą linią."); return; }
+    try {
+      setLoadingAnalyze(true);
+      setAnalyzeError("");
+      setBrandDNA(null);
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ posts: postList }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setAnalyzeError(json.error || "Błąd analizy."); return; }
+      setBrandDNA(json.brandDNA);
+      markUiComplete("dna_analyzed");
+      markActivityToday();
+    } catch { setAnalyzeError("Błąd połączenia."); } finally { setLoadingAnalyze(false); }
+  };
+
+  const handleRewrite = async () => {
+    if (!rewriteInput.trim()) { setRewriteError("Wklej post do przepisania."); return; }
+    try {
+      setLoadingRewrite(true);
+      setRewriteError("");
+      setRewriteVariants([]);
+      setRewriteMeta(null);
+      const res = await fetch("/api/rewrite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: rewriteInput, brandDNA, postCount: posts.length }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setRewriteError(json.error || "Błąd."); return; }
+      setRewriteVariants(json.variants || []);
+      setRewriteMeta({ mode: json.mode, userStylePct: json.userStylePct, improvePct: json.improvePct });
+      markUiComplete("rewrite_used");
+      markActivityToday();
+    } catch { setRewriteError("Błąd połączenia."); } finally { setLoadingRewrite(false); }
+  };
+
   const handleNavigate = (v: ViewType) => {
     setView(v);
     setSidebarOpen(false);
@@ -507,7 +617,14 @@ export default function DashboardPage() {
   const greeting = getGreeting();
   const userName = brandProfile?.company || "tam";
 
-  // ── Sidebar ───────────────────────────────────────────────────────────────
+  const NAV_ITEMS = [
+    { id: "dashboard" as ViewType, label: "Home",      icon: "🏠" },
+    { id: "generator" as ViewType, label: "Generator", icon: "✨" },
+    { id: "calendar"  as ViewType, label: "Kalendarz", icon: "📅" },
+    { id: "engagement"as ViewType, label: "Engagement",icon: "💬" },
+    { id: "drafts"    as ViewType, label: "Drafty",    icon: "📝" },
+    { id: "brandlab"  as ViewType, label: "Brand Lab", icon: "🧬" },
+  ];
 
   const SidebarContent = () => (
     <>
@@ -516,17 +633,14 @@ export default function DashboardPage() {
         <div><h1 className="text-lg font-bold tracking-tight text-slate-900">DiGin</h1><p className="text-xs text-slate-400">AI Marketing Assistant</p></div>
       </div>
       <nav className="space-y-1">
-        {([
-          { id: "dashboard", label: "Home", icon: "🏠" },
-          { id: "generator", label: "Generator", icon: "✨" },
-          { id: "calendar", label: "Kalendarz", icon: "📅" },
-          { id: "engagement", label: "Engagement", icon: "💬" },
-          { id: "drafts", label: "Drafty", icon: "📝" },
-        ] as { id: ViewType; label: string; icon: string }[]).map((item) => (
+        {NAV_ITEMS.map((item) => (
           <button key={item.id} onClick={() => handleNavigate(item.id)}
             className={`w-full flex items-center gap-3 rounded-2xl px-4 py-3 text-left transition ${view === item.id ? "bg-emerald-500 text-white shadow-sm" : "text-slate-600 hover:bg-slate-100"}`}>
             <span className="text-base">{item.icon}</span>
             <span className="text-sm font-medium">{item.label}</span>
+            {item.id === "brandlab" && !uiCompletions.has("dna_analyzed") && (
+              <span className="ml-auto flex h-2 w-2 rounded-full bg-amber-400" />
+            )}
           </button>
         ))}
       </nav>
@@ -547,12 +661,12 @@ export default function DashboardPage() {
   const BottomNav = () => (
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-100 px-2 pb-safe">
       <div className="flex items-center justify-around py-2">
-        {([
-          { id: "dashboard", label: "Home", icon: "🏠" },
-          { id: "calendar", label: "Kalendarz", icon: "📅" },
-          { id: "drafts", label: "Drafty", icon: "📝" },
-          { id: "engagement", label: "Engage", icon: "💬" },
-        ] as { id: ViewType; label: string; icon: string }[]).map((item) => (
+        {[
+          { id: "dashboard"  as ViewType, label: "Home",     icon: "🏠" },
+          { id: "calendar"   as ViewType, label: "Kalendarz",icon: "📅" },
+          { id: "drafts"     as ViewType, label: "Drafty",   icon: "📝" },
+          { id: "brandlab"   as ViewType, label: "Lab",      icon: "🧬" },
+        ].map((item) => (
           <button key={item.id} onClick={() => handleNavigate(item.id)} className="flex flex-col items-center gap-0.5 px-3 py-1">
             <span className="text-2xl">{item.icon}</span>
             <span className={`text-xs font-medium ${view === item.id ? "text-emerald-600" : "text-slate-400"}`}>{item.label}</span>
@@ -564,6 +678,8 @@ export default function DashboardPage() {
       </div>
     </nav>
   );
+
+  const analyzePostList = analyzePosts.split(/\n{2,}/).map((p) => p.trim()).filter((p) => p.length > 20);
 
   return (
     <div className="min-h-screen bg-[#f8faf9] text-slate-900">
@@ -592,7 +708,6 @@ export default function DashboardPage() {
           {/* ── DASHBOARD ── */}
           {view === "dashboard" && (
             <div className="p-4 lg:p-8 space-y-5 max-w-2xl mx-auto lg:max-w-none">
-
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-2xl font-bold text-slate-900">{greeting}, {userName}! {growthLevelData.emoji}</h2>
@@ -601,14 +716,13 @@ export default function DashboardPage() {
                 <button onClick={() => setSidebarOpen(true)} className="lg:hidden flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600">☰</button>
               </div>
 
-              {/* Challenge Alert */}
               {!loadingPosts && !loadingProfile && (
                 <ChallengeAlert posts={posts} profile={brandProfile} currentLevel={currentLevel} ui={uiCompletions} onNavigate={handleNavigate} />
               )}
 
               <div className="grid grid-cols-2 gap-3">
                 <button onClick={() => handleNavigate("generator")} className="flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-4 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-600 transition">✨ Generuj post</button>
-                <button onClick={() => handleNavigate("calendar")} className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">📅 Otwórz kalendarz</button>
+                <button onClick={() => handleNavigate("brandlab")} className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">🧬 Brand Lab</button>
               </div>
 
               <div className="rounded-2xl border border-slate-100 bg-white p-5">
@@ -624,6 +738,15 @@ export default function DashboardPage() {
                   <div className="text-center"><p className="text-xl font-bold text-slate-900">{stats.scheduled}</p><p className="text-xs text-slate-500">Zaplanowane</p></div>
                   <div className="h-8 w-px bg-slate-100" />
                   <div className="text-center"><p className="text-xl font-bold text-emerald-600">Lv.{currentLevel}</p><p className="text-xs text-slate-500">Poziom</p></div>
+                  {brandDNA && (
+                    <>
+                      <div className="h-8 w-px bg-slate-100" />
+                      <div className="text-center">
+                        <p className="text-xl font-bold" style={{ color: brandDNA.score >= 70 ? "#10b981" : brandDNA.score >= 50 ? "#f59e0b" : "#ef4444" }}>{brandDNA.score}</p>
+                        <p className="text-xs text-slate-500">Brand Score</p>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -689,26 +812,22 @@ export default function DashboardPage() {
               <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
                 <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm space-y-4">
                   <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Ustawienia</p>
-
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-slate-700">Platforma</label>
                     <select value={generatorForm.platform} onChange={(e) => setGeneratorForm((p) => ({ ...p, platform: e.target.value as GeneratorForm["platform"] }))} className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition">
                       <option>Instagram</option><option>Facebook</option><option>LinkedIn</option>
                     </select>
                   </div>
-
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-slate-700">Typ posta</label>
                     <select value={generatorForm.type} onChange={(e) => setGeneratorForm((p) => ({ ...p, type: e.target.value as GeneratorForm["type"] }))} className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition">
                       <option>Sales post</option><option>Educational</option><option>Storytelling</option>
                     </select>
                   </div>
-
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-slate-700">Temat</label>
                     <input value={generatorForm.topic} onChange={(e) => setGeneratorForm((p) => ({ ...p, topic: e.target.value }))} placeholder="np. wiosenna oferta, nowy produkt, efekt klienta" className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition" />
                   </div>
-
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-slate-700">Ton</label>
                     <select value={tone} onChange={(e) => setTone(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition">
@@ -720,7 +839,6 @@ export default function DashboardPage() {
                       <option value="inspiring">Inspirujący i motywujący</option>
                     </select>
                   </div>
-
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-slate-700">Długość</label>
                     <select value={length} onChange={(e) => setLength(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition">
@@ -729,17 +847,14 @@ export default function DashboardPage() {
                       <option value="long">Długi (7–10 linijek)</option>
                     </select>
                   </div>
-
                   <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
                     <input type="checkbox" id="hashtags" checked={includeHashtags} onChange={(e) => setIncludeHashtags(e.target.checked)} className="h-4 w-4 accent-emerald-500" />
                     <label htmlFor="hashtags" className="text-sm font-medium text-slate-700 cursor-pointer">Dodaj hashtagi</label>
                   </div>
-
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-slate-700">Data i godzina publikacji</label>
                     <input type="datetime-local" value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none focus:border-emerald-400 transition" />
                   </div>
-
                   <button onClick={handleGenerate} disabled={loadingGenerate} className="w-full rounded-xl bg-emerald-500 py-3.5 text-sm font-semibold text-white hover:bg-emerald-600 transition disabled:opacity-50 disabled:cursor-not-allowed">
                     {loadingGenerate ? "Generowanie..." : "✨ Generuj treść"}
                   </button>
@@ -753,21 +868,18 @@ export default function DashboardPage() {
                     <div><p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Wynik</p><h3 className="text-lg font-bold text-slate-900">Wygenerowany post</h3></div>
                     {generatedPost && <button onClick={() => setGeneratedPost("")} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-50">Wyczyść</button>}
                   </div>
-
                   {!generatedPost && !loadingGenerate && (
                     <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 p-10 text-center">
                       <span className="text-4xl mb-3">✨</span>
                       <p className="text-sm text-slate-400">Kliknij Generuj, żeby zobaczyć swój post.</p>
                     </div>
                   )}
-
                   {loadingGenerate && (
                     <div className="flex flex-col items-center justify-center rounded-2xl bg-emerald-50 p-10 text-center">
                       <span className="text-4xl mb-3 animate-bounce">🌱</span>
                       <p className="text-sm text-emerald-600 font-medium">Tworzę treść dla Twojej marki...</p>
                     </div>
                   )}
-
                   {generatedPost && !loadingGenerate && (
                     <>
                       <div className="rounded-2xl bg-slate-50 border border-slate-100 p-4 mb-4">
@@ -823,7 +935,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <div className="grid grid-cols-7 gap-1 mb-1">
-                    {["P", "W", "Ś", "C", "P", "S", "N"].map((d, i) => <div key={i} className="py-2 text-center text-xs font-semibold text-slate-400">{d}</div>)}
+                    {["P","W","Ś","C","P","S","N"].map((d,i) => <div key={i} className="py-2 text-center text-xs font-semibold text-slate-400">{d}</div>)}
                   </div>
                   <div className="grid grid-cols-7 gap-1">
                     {calendarDays.map((day, index) => {
@@ -934,7 +1046,6 @@ export default function DashboardPage() {
                 </div>
                 <button onClick={() => handleNavigate("generator")} className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600">+ Nowy draft</button>
               </div>
-
               {loadingPosts && <div className="rounded-2xl bg-white border border-slate-100 p-4 text-sm text-slate-400">Ładowanie...</div>}
               {postsError && <div className="rounded-2xl bg-red-50 border border-red-100 p-4 text-sm text-red-500">{postsError}</div>}
               {!loadingPosts && posts.length === 0 && (
@@ -964,6 +1075,164 @@ export default function DashboardPage() {
                 ))}
               </div>
               {copyMessage && <p className="mt-4 text-sm text-emerald-600">{copyMessage}</p>}
+            </div>
+          )}
+
+          {/* ── BRAND LAB ── */}
+          {view === "brandlab" && (
+            <div className="p-4 lg:p-8 max-w-4xl mx-auto lg:max-w-none space-y-6">
+              <div className="flex items-center gap-3">
+                <button onClick={() => handleNavigate("dashboard")} className="lg:hidden text-slate-400">‹</button>
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900">Brand Lab 🧬</h2>
+                  <p className="text-sm text-slate-500">AI analizuje Twoją markę i uczy się jak ją wzmocnić.</p>
+                </div>
+              </div>
+
+              {/* Step 1: Analyzer */}
+              <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white text-xs font-bold">1</span>
+                  <h3 className="font-bold text-slate-900">Analiza DNA marki</h3>
+                </div>
+                <p className="text-xs text-slate-400 mb-4 pl-8">Wklej 3–10 swoich ostatnich postów (każdy oddziel pustą linią). AI przeanalizuje Twój styl.</p>
+                <textarea
+                  value={analyzePosts}
+                  onChange={(e) => setAnalyzePosts(e.target.value)}
+                  placeholder={"Wklej tutaj swoje posty...\n\n(Każdy post oddziel pustą linią)\n\nPost 1...\n\nPost 2..."}
+                  rows={8}
+                  className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition font-mono"
+                />
+                <div className="flex items-center justify-between mt-2 mb-4">
+                  <p className="text-xs text-slate-400">{analyzePostList.length} post{analyzePostList.length !== 1 ? "ów" : ""} wykrytych</p>
+                  {analyzeError && <p className="text-xs text-red-500">{analyzeError}</p>}
+                </div>
+                <button onClick={handleAnalyzeDNA} disabled={loadingAnalyze || analyzePostList.length < 2} className="w-full rounded-xl bg-emerald-500 py-3.5 text-sm font-semibold text-white hover:bg-emerald-600 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                  {loadingAnalyze ? "Analizuję markę..." : "🧬 Analizuj DNA marki"}
+                </button>
+              </div>
+
+              {/* Loading */}
+              {loadingAnalyze && (
+                <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-8 text-center">
+                  <span className="text-4xl animate-pulse">🧬</span>
+                  <p className="mt-3 text-sm text-emerald-700 font-medium">Buduję profil DNA Twojej marki...</p>
+                </div>
+              )}
+
+              {/* DNA Result */}
+              {brandDNA && !loadingAnalyze && (() => {
+                const modeKey = brandDNA.mode ?? "upgrade";
+                const modeCfg = MODE_CONFIG[modeKey];
+                return (
+                  <div className={`rounded-2xl border p-5 ${modeCfg.bgClass}`}>
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${modeCfg.badgeClass}`}>
+                          {modeCfg.emoji} {modeCfg.label}
+                        </span>
+                        <h3 className="mt-2 text-lg font-bold text-slate-900">{modeCfg.headline}</h3>
+                        <p className="text-sm text-slate-600 mt-0.5">{modeCfg.desc}</p>
+                        <p className="mt-2 text-sm italic text-slate-500">„{brandDNA.recommendation}"</p>
+                      </div>
+                      <div className="ml-4 shrink-0 text-center">
+                        <ScoreRing score={brandDNA.score} />
+                        <p className="text-[10px] text-slate-500 mt-1 font-medium">Brand Score</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+                      {[
+                        { label: "Ton", value: brandDNA.tone },
+                        { label: "Energia", value: brandDNA.energy },
+                        { label: "Struktura", value: brandDNA.structure },
+                        { label: "CTA", value: brandDNA.cta },
+                        { label: "Spójność", value: brandDNA.consistency },
+                        { label: "Język", value: brandDNA.language },
+                        { label: "Długość", value: brandDNA.avgLength },
+                        { label: "Emoji", value: brandDNA.usesEmoji ? "Tak" : "Nie" },
+                      ].map((item) => (
+                        <div key={item.label} className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
+                          <p className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">{item.label}</p>
+                          <p className="text-sm font-semibold text-slate-800 mt-0.5 capitalize">{item.value}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {brandDNA.strengths?.length > 0 && (
+                        <div className="rounded-xl bg-white/70 p-3">
+                          <p className="text-xs font-semibold text-emerald-700 mb-2">✅ Mocne strony</p>
+                          {brandDNA.strengths.map((s, i) => <p key={i} className="text-xs text-slate-700">• {s}</p>)}
+                        </div>
+                      )}
+                      {brandDNA.weaknesses?.length > 0 && (
+                        <div className="rounded-xl bg-white/70 p-3">
+                          <p className="text-xs font-semibold text-amber-700 mb-2">🔧 Do wzmocnienia</p>
+                          {brandDNA.weaknesses.map((w, i) => <p key={i} className="text-xs text-slate-700">• {w}</p>)}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Step 2: Rewrite me better */}
+              <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-800 text-white text-xs font-bold">2</span>
+                  <h3 className="font-bold text-slate-900">Rewrite me better 🔥</h3>
+                </div>
+                <p className="text-xs text-slate-400 mb-4 pl-8">
+                  Wklej swój post — AI przepisze go w 3 wersjach.
+                  {brandDNA ? <span className="text-emerald-600 font-medium"> Używam Twojego Brand DNA.</span> : <span> (Zrób analizę DNA wyżej dla lepszych wyników.)</span>}
+                </p>
+                {rewriteMeta && (
+                  <div className="mb-3 rounded-xl bg-slate-50 border border-slate-200 px-3 py-2 flex items-center gap-2">
+                    <span className="text-sm">{rewriteMeta.mode === "shadow" ? "🔮" : "🚀"}</span>
+                    <p className="text-xs text-slate-600">
+                      <span className="font-semibold">{rewriteMeta.mode === "shadow" ? "Shadow Mode" : "Upgrade Mode"}</span>
+                      {" "}— {rewriteMeta.userStylePct}% Twój styl, {rewriteMeta.improvePct}% poprawa
+                    </p>
+                  </div>
+                )}
+                <textarea value={rewriteInput} onChange={(e) => setRewriteInput(e.target.value)} placeholder="Wklej tutaj post, który chcesz przepisać..." rows={5} className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-300 transition mb-3" />
+                {rewriteError && <p className="text-sm text-red-500 mb-3">{rewriteError}</p>}
+                <button onClick={handleRewrite} disabled={loadingRewrite || !rewriteInput.trim()} className="w-full rounded-xl bg-slate-900 py-3.5 text-sm font-semibold text-white hover:bg-slate-800 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                  {loadingRewrite ? "Przepisuję..." : "🔥 Rewrite me better"}
+                </button>
+              </div>
+
+              {loadingRewrite && (
+                <div className="rounded-2xl border border-slate-100 bg-slate-50 p-8 text-center">
+                  <span className="text-4xl animate-bounce">✍️</span>
+                  <p className="mt-3 text-sm text-slate-600 font-medium">Tworzę 3 wersje Twojego posta...</p>
+                </div>
+              )}
+
+              {rewriteVariants.length > 0 && !loadingRewrite && (
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">3 wersje Twojego posta</p>
+                  {rewriteVariants.map((v, i) => (
+                    <div key={i} className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-800 text-white text-[10px] font-bold">{i + 1}</span>
+                            <p className="text-sm font-bold text-slate-900">{v.label}</p>
+                          </div>
+                          <p className="text-xs text-slate-400 mt-0.5 pl-7">{v.description}</p>
+                        </div>
+                        <button onClick={async () => { await navigator.clipboard.writeText(v.content); setCopiedRewriteIdx(i); setTimeout(() => setCopiedRewriteIdx(null), 2000); }}
+                          className="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition">
+                          {copiedRewriteIdx === i ? "Skopiowano ✅" : "Kopiuj"}
+                        </button>
+                      </div>
+                      <div className="rounded-xl bg-slate-50 border border-slate-100 p-4">
+                        <p className="text-sm text-slate-800 leading-7 whitespace-pre-wrap">{v.content}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
