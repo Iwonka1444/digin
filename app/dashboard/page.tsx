@@ -1504,7 +1504,11 @@ setRewriteError(String(t.conn_err));
                     <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-50 pt-3">
                       <div>
                         <span className="text-xs text-slate-400">{t.drafts_created} {formatDateTime(post.created_at, String(t.cal_locale))}</span>
-                        {post.scheduled_for && <span className="ml-3 text-xs text-emerald-600">📅 {formatDateTime(post.scheduled_for, t.cal_locale)}</span>}
+                        {post.scheduled_for && (
+  <span className="ml-3 text-xs text-emerald-600">
+    📅 {formatDateTime(post.scheduled_for, String(t.cal_locale))}
+  </span>
+)}
                       </div>
                       <div className="flex gap-2">
                         <button onClick={() => handleCopy(post.content)} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">{t.drafts_copy}</button>
