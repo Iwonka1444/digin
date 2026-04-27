@@ -999,8 +999,8 @@ setSavingToCalendar(false);
   };
 
   const handleCopy = async (text: string) => {
-    try { await navigator.clipboard.writeText(text); setCopyMessage(t.copied); setTimeout(() => setCopyMessage(""), 2000); }
-    catch { setCopyMessage(t.copy_err); }
+    try { await navigator.clipboard.writeText(text); setCopyMessage(String(t.copied)); setTimeout(() => setCopyMessage(""), 2000); }
+    catch { setCopyMessage(String(t.copy_err)); }
   };
 
   const handleDelete = async (id: string) => {
