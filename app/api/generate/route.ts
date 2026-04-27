@@ -165,6 +165,10 @@ Do not start with emoji.
 Do not start with a generic slogan.
 
 BANNED PHRASES:
+- każdy detal ma znaczenie
+- może zmienić wszystko
+- daj swojej marce nowy blask
+- zrób pierwszy krok
 - can do wonders
 - invest in your brand image
 - start taking action
