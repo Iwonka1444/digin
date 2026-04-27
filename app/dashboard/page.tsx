@@ -1537,9 +1537,9 @@ setRewriteError(String(t.conn_err));
                   <h3 className="font-bold text-slate-900">{t.lab_step1}</h3>
                 </div>
                 <p className="text-xs text-slate-400 mb-4 pl-8">{t.lab_step1_hint}</p>
-                <textarea value={analyzePosts} onChange={(e) => setAnalyzePosts(e.target.value)} placeholder={t.lab_step1_ph} rows={8} className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition font-mono" />
+                <textarea value={analyzePosts} onChange={(e) => setAnalyzePosts(e.target.value)} placeholder={String(t.lab_step1_ph)} rows={8} className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition font-mono" />
                 <div className="flex items-center justify-between mt-2 mb-4">
-                  <p className="text-xs text-slate-400">{analyzePostList.length} {t.lab_posts_detected}</p>
+                  <p className="text-xs text-slate-400">{analyzePostList.length} {String(t.lab_posts_detected)}</p>
                   {analyzeError && <p className="text-xs text-red-500">{analyzeError}</p>}
                 </div>
                 <button onClick={handleAnalyzeDNA} disabled={loadingAnalyze || analyzePostList.length < 2} className="w-full rounded-xl bg-emerald-500 py-3.5 text-sm font-semibold text-white hover:bg-emerald-600 transition disabled:opacity-50 disabled:cursor-not-allowed">
