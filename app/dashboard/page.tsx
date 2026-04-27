@@ -893,7 +893,24 @@ export default function DashboardPage() {
     await supabase.auth.signOut();
     window.location.href = "/login";
   };
+  const connectFacebook = () => {
+    const appId = process.env.NEXT_PUBLIC_META_APP_ID;
 
+    if (!appId) {
+      alert("Missing NEXT_PUBLIC_META_APP_ID");
+      return;
+    }
+
+    const redirectUri = encodeURIComponent(
+      "https://digin-two.vercel.app/api/meta/connect"
+    );
+
+    const scope = encodeURIComponent(
+      "pages_show_list,pages_manage_posts,instagram_basic,instagram_content_publish"
+    );
+
+    window.location.href = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${appId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code`;
+  };
   async function loadProfile() {
     try {
       setLoadingProfile(true);
@@ -1188,6 +1205,14 @@ setRewriteError(String(t.conn_err));
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-2xl font-bold text-slate-900">{greeting}{userName ? `, ${userName}` : ""}! {levelEmoji}</h2>
+<div className="mt-4">
+  <button
+    onClick={connectFacebook}
+    className="rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition"
+  >
+    🔗 Połącz z Facebook
+  </button>
+</div>
                   <p className="text-sm text-slate-500 mt-0.5">{t.tagline}</p>
                 </div>
                 <button onClick={() => setSidebarOpen(true)} className="lg:hidden flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600">☰</button>
@@ -1200,6 +1225,26 @@ setRewriteError(String(t.conn_err));
               <div className="grid grid-cols-2 gap-3">
                 <button onClick={() => handleNavigate("generator")} className="flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-4 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-600 transition">{t.btn_generate}</button>
                 <button onClick={() => handleNavigate("brandlab")} className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">{t.btn_brandlab}</button>
+              </div>
+              <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">
+                      Connect Meta
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      Connect Facebook to publish posts later.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={connectFacebook}
+                    className="shrink-0 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition"
+                  >
+                    Połącz z Facebook
+                  </button>
+                </div>
               </div>
 
               <div className="rounded-2xl border border-slate-100 bg-white p-5">
