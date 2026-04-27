@@ -14,9 +14,5 @@ export async function GET(req: Request) {
 
   console.log("META TOKEN:", tokenData);
 
-await supabase.from("meta_accounts").insert({
-  access_token: data.access_token,
-});
-
   return Response.redirect("https://digin-two.vercel.app/dashboard");
 }
