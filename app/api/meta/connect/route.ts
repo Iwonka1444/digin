@@ -3,8 +3,7 @@ export async function GET() {
     client_id: process.env.META_APP_ID!,
     redirect_uri: process.env.META_REDIRECT_URI!,
     response_type: "code",
-    scope:
-      "pages_show_list,pages_manage_posts,pages_read_engagement,instagram_basic,instagram_content_publish",
+    scope: "pages_show_list,pages_manage_posts,pages_read_engagement",
   });
 
   return Response.redirect(
