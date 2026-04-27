@@ -1243,7 +1243,7 @@ const handleGenerateAiImage = async () => {
       <div className="flex gap-2">
         
           href={aiImageUrl}
-          download="digin-ai-image.png"
+          download
           target="_blank"
           rel="noopener noreferrer"
           className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
