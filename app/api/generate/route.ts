@@ -232,9 +232,14 @@ Write ONLY the post. No explanation.
     const rawOutput =
       response.choices?.[0]?.message?.content ?? "No response from model.";
 
-    const output = normalizeOutput(rawOutput)
-      .replace(/\n{3,}/g, "\n\n")
-      .trim();
+  const cleaned = normalizeOutput(rawOutput)
+  .replace(/\n{3,}/g, "\n\n")
+  .trim();
+
+// 🔥 FORCE FIRST LINE FROM REWRITTEN TOPIC
+const firstLine = rewrittenTopic.charAt(0).toUpperCase() + rewrittenTopic.slice(1);
+
+const output = `${firstLine}\n\n${cleaned}`;
 
     return NextResponse.json({ output });
   } catch (error) {
