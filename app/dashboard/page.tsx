@@ -860,22 +860,47 @@ const scope = encodeURIComponent("public_profile");
     } catch { setEngagementError("Connection error."); } finally { setLoadingEngagement(false); }
   };
 const handleGenerateAiImage = async () => {
-    if (!generatedPost.trim()) return;
-    try {
-      setLoadingAiImage(true);
-      setAiImageError("");
-      setAiImageUrl(null);
-      const res = await fetch("/api/generate-image", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...generatorForm, includeHashtags, tone, length, postLangs, generateImage: true, postContent: generatedPost }),
-      });
-      const json = await res.json();
-      if (!res.ok) { setAiImageError(json.error || "Image error."); return; }
-      if (json.imageUrl) setAiImageUrl(json.imageUrl);
-    } catch { setAiImageError("Connection error."); } finally { setLoadingAiImage(false); }
-  };
+  if (!generatedPost.trim()) {
+    setAiImageError("Generate a post first.");
+    return;
+  }
 
+  try {
+    setLoadingAiImage(true);
+    setAiImageError("");
+    setAiImageUrl(null);
+
+    const res = await fetch("/api/generate-image", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        platform: generatorForm.platform,
+        postContent: generatedPost,
+        brandColors: (brandProfile as any)?.brand_colors || "",
+        brandStyle: (brandProfile as any)?.brand_style || "",
+      }),
+    });
+
+    const json = await res.json();
+
+    if (!res.ok) {
+      setAiImageError(json.error || "Image error.");
+      return;
+    }
+
+    if (!json.imageUrl) {
+      setAiImageError("No image returned.");
+      return;
+    }
+
+    setAiImageUrl(json.imageUrl);
+  } catch (err) {
+    console.error(err);
+    setAiImageError("Connection error.");
+  } finally {
+    setLoadingAiImage(false);
+  }
+};
   const handleAnalyzeDNA = async () => {
     const postList = analyzePosts.split(/\n{2,}/).map((p) => p.trim()).filter((p) => p.length > 20);
     if (postList.length < 2) { setAnalyzeError("Paste at least 2 posts separated by a blank line."); return; }
