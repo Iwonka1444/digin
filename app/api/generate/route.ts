@@ -138,6 +138,9 @@ ${topic || "general brand promotion"}
 
 Improved marketing angle:
 ${rewrittenTopic}
+This angle MUST define the entire post.
+Do NOT ignore it.
+The post must be clearly based on this situation.
 
 STRICT RULES:
 - NEVER write like a promotion or announcement
@@ -194,10 +197,12 @@ ${
 }
 
 Structure:
-- Line 1: strong relatable hook
-- Paragraph 1: explain the problem in 2–3 sentences
-- Paragraph 2: connect the problem to the offer in 2–3 sentences
-- Final line: soft CTA
+Structure:
+- Start directly with the situation from the improved angle
+- Show what is going wrong in reality
+- Explain why it happens
+- Then introduce the solution naturally
+- End with soft CTA
 ${
   includeHashtags
     ? "- Add hashtags in ONE final line only, max 5 hashtags"
