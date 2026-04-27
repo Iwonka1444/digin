@@ -1015,7 +1015,11 @@ setSavingToCalendar(false);
       if (!res.ok) { setEngagementError(json.error || "Error."); return; }
       setEngagementComments(json.comments || []);
       markUiComplete("engagement_used"); markUiComplete("engagement_ideas"); markActivityToday();
-    } catch { setEngagementError(t.conn_err); } finally { setLoadingEngagement(false); }
+    } catch {
+ setEngagementError(String(t.conn_err);
+} finally {
+  setLoadingEngagement(false);
+}
   };
 
   const handleAnalyzeDNA = async () => {
@@ -1027,7 +1031,9 @@ setSavingToCalendar(false);
       const json = await res.json();
       if (!res.ok) { setAnalyzeError(json.error || "Analysis error."); return; }
       setBrandDNA(json.brandDNA); markUiComplete("dna_analyzed"); markActivityToday();
-    } catch { setAnalyzeError(t.conn_err); } finally { setLoadingAnalyze(false); }
+    } catch { 
+setAnalyzeError(String(t.conn_err));
+ } finally { setLoadingAnalyze(false); }
   };
 
   const handleRewrite = async () => {
@@ -1039,7 +1045,10 @@ setSavingToCalendar(false);
       if (!res.ok) { setRewriteError(json.error || "Error."); return; }
       setRewriteVariants(json.variants || []); setRewriteMeta({ mode: json.mode, userStylePct: json.userStylePct, improvePct: json.improvePct });
       markUiComplete("rewrite_used"); markActivityToday();
-    } catch { setRewriteError(t.conn_err); } finally { setLoadingRewrite(false); }
+    } catch { 
+setRewriteError(String(t.conn_err)); 
+} finally {
+ setLoadingRewrite(false); }
   };
 
   const handleNavigate = (v: ViewType) => { setView(v); setSidebarOpen(false); if (v === "drafts") markUiComplete("drafts_reviewed"); };
