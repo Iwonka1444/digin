@@ -3,6 +3,7 @@ import { createClient } from "../../../lib/supabase/server";
 
 export async function GET() {
   const supabase = await createClient();
+
   const {
     data: { user },
     error: userError,
@@ -27,6 +28,7 @@ export async function GET() {
 
 export async function PATCH(req: Request) {
   const supabase = await createClient();
+
   const {
     data: { user },
     error: userError,
@@ -37,20 +39,34 @@ export async function PATCH(req: Request) {
   }
 
   const body = await req.json();
-  const { company, industry, tone, offer, audience } = body;
+
+  const {
+    company,
+    industry,
+    tone,
+    offer,
+    audience,
+    brand_colors,
+    brand_style,
+  } = body;
 
   const { data, error } = await supabase
     .from("brand_profiles")
-    .upsert({
-      user_id: user.id,
-      company,
-      industry,
-      tone,
-      offer,
-      audience,
-    }, { onConflict: "user_id" })
-  .select()
-.maybeSingle();
+    .upsert(
+      {
+        user_id: user.id,
+        company,
+        industry,
+        tone,
+        offer,
+        audience,
+        brand_colors,
+        brand_style,
+      },
+      { onConflict: "user_id" }
+    )
+    .select()
+    .maybeSingle();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
