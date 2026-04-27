@@ -1,5 +1,8 @@
 "use client";
 
+const tString = (val: string | string[]) =>
+  Array.isArray(val) ? val[0] : val;
+
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
@@ -1596,7 +1599,7 @@ setRewriteError(String(t.conn_err));
                     <p className="text-xs text-slate-600"><span className="font-semibold">{rewriteMeta.mode === "shadow" ? "Shadow Mode" : "Upgrade Mode"}</span> — {rewriteMeta.userStylePct}% style, {rewriteMeta.improvePct}% improvement</p>
                   </div>
                 )}
-                <textarea value={rewriteInput} onChange={(e) => setRewriteInput(e.target.value)} placeholder={String(t.lab_rewrite_ph)} rows={5} className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-300 transition mb-3" />
+                <textarea value={rewriteInput} onChange={(e) => setRewriteInput(e.target.value)} placeholder={tString(t.lab_rewrite_ph)} rows={5} className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-300 transition mb-3" />
                 {rewriteError && <p className="text-sm text-red-500 mb-3">{rewriteError}</p>}
                 <button onClick={handleRewrite} disabled={loadingRewrite || !rewriteInput.trim()} className="w-full rounded-xl bg-slate-900 py-3.5 text-sm font-semibold text-white hover:bg-slate-800 transition disabled:opacity-50 disabled:cursor-not-allowed">
                   {loadingRewrite ? t.lab_rewriting : t.lab_rewrite_btn}
