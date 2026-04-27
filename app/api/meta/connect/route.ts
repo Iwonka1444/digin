@@ -3,7 +3,7 @@ export async function GET() {
     client_id: process.env.META_APP_ID!,
     redirect_uri: process.env.META_REDIRECT_URI!,
     response_type: "code",
-    scope: "public_profile,email",
+    scope: "public_profile",
   });
 
   return Response.redirect(
