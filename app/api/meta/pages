@@ -1,5 +1,5 @@
 export async function GET() {
-  const token = "TWOJ_TOKEN_Z_BAZY"; // na razie hardcode
+  const token = process.env.META_TEST_TOKEN!;
 
   const res = await fetch(
     `https://graph.facebook.com/v23.0/me/accounts?access_token=${token}`
