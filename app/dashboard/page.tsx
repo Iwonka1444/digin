@@ -911,8 +911,26 @@ export default function DashboardPage() {
       const json = await res.json();
       if (!res.ok) { setPostsError(json.error || "Load error."); return; }
       setPosts(json.data || []);
-    } catch { setPostsError(T[lang].conn_err); } finally { setLoadingPosts(false); }
+   async function loadPosts() {
+  try {
+    setLoadingPosts(true);
+    setPostsError("");
+
+    const res = await fetch("/api/posts");
+    const json = await res.json();
+
+    if (!res.ok) {
+      setPostsError(json.error || "Load error.");
+      return;
+    }
+
+    setPosts(json.data || []);
+  } catch {
+    setPostsError(String(T[lang].conn_err));
+  } finally {
+    setLoadingPosts(false);
   }
+}
 
   useEffect(() => { loadProfile(); loadPosts(); }, []);
 
@@ -936,8 +954,13 @@ export default function DashboardPage() {
           if (count >= 3) markUiComplete("three_variants");
         } catch {}
       }
-    } catch { setGenerateError(t.conn_err); } finally { setLoadingGenerate(false); }
-  };
+    } catch {
+  setGenerateError(
+    Array.isArray(t.conn_err) ? t.conn_err[0] : t.conn_err
+  );
+} finally {
+  setLoadingGenerate(false);
+}
 
   const handleSaveToCalendar = async () => {
     try {
