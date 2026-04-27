@@ -702,6 +702,9 @@ export default function DashboardPage() {
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaUrl, setMediaUrl] = useState<string>("");
   const [uploadingMedia, setUploadingMedia] = useState(false);
+const [aiImageUrl, setAiImageUrl] = useState<string | null>(null);
+const [loadingAiImage, setLoadingAiImage] = useState(false);
+const [aiImageError, setAiImageError] = useState("");
   const [engagementPost, setEngagementPost] = useState("");
   const [engagementContext, setEngagementContext] = useState("");
   const [engagementComments, setEngagementComments] = useState<string[]>([]);
@@ -855,6 +858,22 @@ const scope = encodeURIComponent("public_profile");
       setEngagementComments(json.comments || []);
       markUiComplete("engagement_used"); markUiComplete("engagement_ideas"); markActivityToday();
     } catch { setEngagementError("Connection error."); } finally { setLoadingEngagement(false); }
+  };
+const handleGenerateAiImage = async () => {
+    if (!generatedPost.trim()) return;
+    try {
+      setLoadingAiImage(true);
+      setAiImageError("");
+      setAiImageUrl(null);
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...generatorForm, includeHashtags, tone, length, postLangs, generateImage: true, postContent: generatedPost }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setAiImageError(json.error || "Image error."); return; }
+      if (json.imageUrl) setAiImageUrl(json.imageUrl);
+    } catch { setAiImageError("Connection error."); } finally { setLoadingAiImage(false); }
   };
 
   const handleAnalyzeDNA = async () => {
@@ -1195,6 +1214,52 @@ const scope = encodeURIComponent("public_profile");
                         {mediaUrl && <img src={mediaUrl} alt="preview" className="w-full rounded-lg mb-2 max-h-40 object-cover cursor-pointer" onClick={() => setLightboxUrl(mediaUrl)} />}
                         <input type="file" accept="image/*,video/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) { setMediaFile(file); const r = new FileReader(); r.onload = (ev) => setMediaUrl(ev.target?.result as string); r.readAsDataURL(file); } }} className="w-full text-xs text-slate-500 file:mr-2 file:rounded-lg file:border-0 file:bg-emerald-50 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-emerald-700" />
                       </div>
+{/* AI Image generation */}
+<div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
+  <p className="text-xs font-medium text-slate-600 mb-2">🤖 AI image for this post</p>
+  {!aiImageUrl && !loadingAiImage && (
+    <button
+      onClick={handleGenerateAiImage}
+      className="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition"
+    >
+      ✨ Generate AI image for this post (optional)
+    </button>
+  )}
+  {loadingAiImage && (
+    <div className="text-center py-4">
+      <span className="text-2xl animate-pulse">🎨</span>
+      <p className="text-xs text-slate-500 mt-1">Creating image...</p>
+    </div>
+  )}
+  {aiImageError && <p className="text-xs text-red-500">{aiImageError}</p>}
+  {aiImageUrl && (
+    <div>
+      <img
+        src={aiImageUrl}
+        alt="AI generated"
+        className="w-full rounded-lg mb-2 max-h-48 object-cover cursor-pointer"
+        onClick={() => setLightboxUrl(aiImageUrl)}
+      />
+      <div className="flex gap-2">
+        
+          href={aiImageUrl}
+          download="digin-ai-image.png"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+        >
+          ⬇ Download image
+        </a>
+        <button
+          onClick={() => { setAiImageUrl(null); setAiImageError(""); }}
+          className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-400 hover:bg-slate-50"
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+  )}
+</div>
                       <div className="flex flex-wrap gap-2">
                         <button onClick={() => handleCopy(generatedPost)} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">{t.gen_copy}</button>
                         <button onClick={handleGenerate} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">{t.gen_regen}</button>
