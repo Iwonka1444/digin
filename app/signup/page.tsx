@@ -105,19 +105,19 @@ export default function SignupPage() {
           />
 
           <label className="mb-1.5 block text-sm font-medium text-slate-700">Password</label>
-          <div className="relative mb-6">
+          <div className="relative mb-6 overflow-visible">
             <input
               type={showPassword ? "text" : "password"}
               placeholder="Min. 6 characters"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSignup()}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 pr-10 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 pr-12 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition"
             />
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
               aria-label={showPassword ? "Hide password" : "Show password"}
             >
               {showPassword ? (
