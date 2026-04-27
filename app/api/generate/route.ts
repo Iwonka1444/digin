@@ -141,8 +141,13 @@ ${rewrittenTopic}
 This angle MUST define the entire post.
 Do NOT ignore it.
 The post must be clearly based on this situation.
+This angle MUST be used as the exact first line (rephrased naturally if needed).
+If the post does not clearly reflect this angle, it is wrong.
 
 STRICT RULES:
+- DO NOT start with emojis
+- DO NOT start with a question
+- DO NOT mention discounts, promotions, or offers in the first 2 lines
 - NEVER write like a promotion or announcement
 - NEVER start with discounts, offers, or "only X people"
 - ALWAYS start from a real pain, frustration, or situation
@@ -197,12 +202,10 @@ ${
 }
 
 Structure:
-Structure:
-- Start directly with the situation from the improved angle
-- Show what is going wrong in reality
-- Explain why it happens
-- Then introduce the solution naturally
-- End with soft CTA
+- First line MUST be a direct restatement of the improved marketing angle (no emojis, no questions, no offers)
+- Paragraph 1: show what is going wrong in real life (2–3 sentences)
+- Paragraph 2: explain why it happens and connect to the offer (2–3 sentences)
+- Final line: soft CTA
 ${
   includeHashtags
     ? "- Add hashtags in ONE final line only, max 5 hashtags"
@@ -222,7 +225,7 @@ Write ONLY the post. No explanation.
         },
         { role: "user", content: prompt },
       ],
-      temperature: 0.9,
+      temperature: 0.85,
       max_tokens: length === "short" ? 140 : length === "long" ? 650 : 400,
     });
 
