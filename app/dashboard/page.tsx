@@ -1352,7 +1352,7 @@ setRewriteError(String(t.conn_err));
                       </div>
                       <div className="rounded-xl border border-slate-100 bg-white p-3 mb-4">
                         <p className="text-xs text-slate-400 uppercase tracking-wider">{t.gen_slot}</p>
-                        <p className="mt-1 text-sm font-medium text-slate-700">{scheduledDate ? formatDateTime(scheduledDate, t.cal_locale) : t.gen_no_date}</p>
+                        <p className="mt-1 text-sm font-medium text-slate-700">{scheduledDate ? formatDateTime(scheduledDate, String(t.cal_locale)) : String(t.gen_no_date)}</p>
                       </div>
                       <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
                         <p className="text-xs font-medium text-slate-600 mb-2">{t.gen_media}</p>
