@@ -905,9 +905,9 @@ export default function DashboardPage() {
       "https://digin-two.vercel.app/api/meta/connect"
     );
 
-    const scope = encodeURIComponent(
-      "pages_show_list,pages_manage_posts,instagram_basic,instagram_content_publish"
-    );
+  const scope = encodeURIComponent(
+  "pages_show_list,pages_read_engagement"
+);
 
     window.location.href = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${appId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code`;
   };
