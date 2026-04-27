@@ -752,7 +752,7 @@ export default function DashboardPage() {
     const appId = process.env.NEXT_PUBLIC_META_APP_ID;
     if (!appId) { alert("Missing NEXT_PUBLIC_META_APP_ID"); return; }
     const redirectUri = encodeURIComponent("https://digin-two.vercel.app/api/meta/callback");
-    const scope = encodeURIComponent("pages_show_list,pages_read_engagement");
+    const scope = encodeURIComponent("email,public_profile");
     window.location.href = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${appId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code`;
   };
 
