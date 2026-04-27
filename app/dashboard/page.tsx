@@ -865,7 +865,7 @@ const handleGenerateAiImage = async () => {
       setLoadingAiImage(true);
       setAiImageError("");
       setAiImageUrl(null);
-      const res = await fetch("/api/generate", {
+      const res = await fetch("/api/generate-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...generatorForm, includeHashtags, tone, length, postLangs, generateImage: true, postContent: generatedPost }),
