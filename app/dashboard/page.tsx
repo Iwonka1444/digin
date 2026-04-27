@@ -11,7 +11,9 @@ type PostLang = "en" | "pl" | "nl";
 const LANG_FLAGS: Record<Lang, string> = { en: "🇬🇧", pl: "🇵🇱", nl: "🇳🇱" };
 const LANG_LABELS: Record<Lang, string> = { en: "English", pl: "Polski", nl: "Nederlands" };
 
-const T: Record<Lang, Record<string, string | string[]>> = {
+type Translation = Record<string, string | string[]>;
+
+const T: Record<Lang, Translation> = {
   en: {
     // Greetings
     greeting_morning: "Good morning",
@@ -1303,8 +1305,8 @@ setRewriteError(String(t.conn_err));
                     <select value={generatorForm.type} onChange={(e) => setGeneratorForm((p) => ({ ...p, type: e.target.value as GeneratorForm["type"] }))} className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition">
                       <option>Sales post</option><option>Educational</option><option>Storytelling</option>
                     </select></div>
-                  <div><label className="mb-1.5 block text-sm font-medium text-slate-700">{t.gen_topic}</label>
-                    <input value={generatorForm.topic} onChange={(e) => setGeneratorForm((p) => ({ ...p, topic: e.target.value }))} placeholder={t.gen_topic_ph} className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition" /></div>
+                  <div><label className="mb-1.5 block text-sm font-medium text-slate-700">{String(t.gen_topic)}</label>
+                    <input value={generatorForm.topic} onChange={(e) => setGeneratorForm((p) => ({ ...p, topic: e.target.value }))} placeholder={String(t.gen_topic_ph)} className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition" /></div>
                   <div><label className="mb-1.5 block text-sm font-medium text-slate-700">{t.gen_tone}</label>
                     <select value={tone} onChange={(e) => setTone(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition">
                       <option value="default">{t.gen_tone_default}</option><option value="bold">{t.gen_tone_bold}</option><option value="casual">{t.gen_tone_casual}</option><option value="funny">{t.gen_tone_funny}</option><option value="formal">{t.gen_tone_formal}</option><option value="inspiring">{t.gen_tone_inspiring}</option>
