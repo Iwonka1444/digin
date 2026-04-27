@@ -988,8 +988,13 @@ export default function DashboardPage() {
       await loadPosts();
       const savedDate = new Date(scheduledForISO);
       setSelectedDate(savedDate); setCurrentMonth(new Date(savedDate.getFullYear(), savedDate.getMonth(), 1));
-      setSaveMessage("✅"); markActivityToday(); handleNavigate("calendar");
-    } catch { setGenerateError(t.conn_err); } finally { setSavingToCalendar(false);
+      setSaveMessage("✅");
+ markActivityToday();
+ handleNavigate("calendar");
+    } catch { 
+setGenerateError(t.conn_err); 
+} finally { 
+setSavingToCalendar(false);
  }
   };
 
