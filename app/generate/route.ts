@@ -93,21 +93,36 @@ Task:
 Write a ${type} post for ${platform}.
 
 Topic:
-${topic || "promoting the brand in a real, relatable way"}
+Task:
+Write a ${type} post for ${platform}.
+
+Write like someone who understands real clients, not marketing theory.
+Avoid sounding like an ad. Sound like a real observation.
 
 STRICT RULES:
-- NO generic marketing phrases like: "key to success", "grow your business", "contact us today", "unlock your potential", "take your brand to the next level"
+STRICT RULES:
+- NEVER write like a promotion or announcement
+- NEVER start with discounts, offers, or "only X people"
+- ALWAYS start from a real pain, frustration, or situation
+- Make the reader feel: "this is about me"
+
+- NO generic marketing phrases like: "key to success", "grow your business", "contact us today", "unlock your potential"
 - NO corporate tone
 - NO empty motivational slogans
 - NO fake excitement
 - NO long intros
+
 - Write like a real person talking
 - Keep it simple, direct, slightly emotional
 - Mix short and medium sentences
+
 - Do NOT put every sentence on a new line
 - Maximum 1 empty line between paragraphs
+- Group sentences into short paragraphs (2–3 sentences per paragraph)
+- Avoid single-sentence paragraphs unless it's a hook
 - Keep paragraphs natural
-- CTA must sound natural, not pushy
+
+- CTA must be soft and natural (not pushy)
 
 Platform style:
 ${
@@ -140,9 +155,10 @@ ${
 }
 
 Structure:
-- First line = strong hook
-- Then 2–3 short paragraphs
-- End with one natural CTA
+- First line = relatable or painful problem
+- Then show insight or shift in thinking
+- Then subtle solution
+- End with soft CTA
 ${
   includeHashtags
     ? "- Add hashtags in ONE final line only, max 5 hashtags"
@@ -154,8 +170,14 @@ Write ONLY the post. No explanation.
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.82,
+      messages: [
+  {
+    role: "system",
+    content: "You are a high-performing social media copywriter who writes posts that convert into clients, not just likes."
+  },
+  { role: "user", content: prompt }
+],
+      temperature: 0.9,
       max_tokens: length === "short" ? 120 : length === "long" ? 600 : 350,
     });
 
