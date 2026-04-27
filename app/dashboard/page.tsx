@@ -1241,7 +1241,7 @@ const handleGenerateAiImage = async () => {
         onClick={() => setLightboxUrl(aiImageUrl)}
       />
       <div className="flex gap-2">
-        
+        <a
           href={aiImageUrl}
           download
           target="_blank"
