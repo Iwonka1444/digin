@@ -165,6 +165,9 @@ Do not start with emoji.
 Do not start with a generic slogan.
 
 BANNED PHRASES:
+- can do wonders
+- invest in your brand image
+- start taking action
 - unlock your potential
 - elevate your business
 - achieve your dreams
@@ -173,12 +176,8 @@ BANNED PHRASES:
 - stand out in a crowded market
 - now is the perfect time
 - don't miss this opportunity
-- zrób krok w stronę sukcesu
-- rozwiń swój biznes
-- transformacja Twojego biznesu
-- skontaktuj się z nami już dziś
-- nie przegap okazji
-- Twoja firma zasługuje na najlepsze
+- your business deserves the best
+- contact us today
 
 STYLE:
 - Human, direct, simple.
@@ -232,10 +231,12 @@ ${
 Hashtags:
 ${
   includeHashtags
-    ? "- Add one final line with max 5 relevant hashtags."
-    : "- Do not add hashtags."
+    ? `- Add one final line with max 5 relevant hashtags.
+- Use common, popular hashtags used by real people.
+- Do NOT invent or translate hashtags unnaturally.
+- Keep them short and clean.`
+    : `- Do not add hashtags.`
 }
-
 Write ONLY the post.
 `;
 
@@ -261,10 +262,25 @@ Write ONLY the post.
     const firstLine =
       rewrittenTopic.charAt(0).toUpperCase() + rewrittenTopic.slice(1);
 
-    const cleanedWithoutDuplicate = cleaned
-      .replace(firstLine, "")
-      .replace(rewrittenTopic, "")
-      .trim();
+const cleanedLines = cleaned
+  .split("\n")
+  .map((line) => line.trim())
+  .filter(Boolean);
+
+const cleanedWithoutDuplicate = cleanedLines
+  .filter((line, index) => {
+    if (index === 0 && line.toLowerCase().includes(rewrittenTopic.toLowerCase())) {
+      return false;
+    }
+
+    if (line.toLowerCase() === rewrittenTopic.toLowerCase()) {
+      return false;
+    }
+
+    return true;
+  })
+  .join("\n\n")
+  .trim();
 
     const output = normalizeOutput(`${firstLine}\n\n${cleanedWithoutDuplicate}`);
 
