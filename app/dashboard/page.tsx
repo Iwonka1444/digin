@@ -902,21 +902,23 @@ export default function DashboardPage() {
     } catch {} finally { setLoadingProfile(false); }
   }
 
-  async function loadPosts() {
-    try {
-      setLoadingPosts(true); setPostsError("");
-      const res = await fetch("/api/posts", { method: "GET", cache: "no-store" });
-      const ct = res.headers.get("content-type") || "";
-      if (!ct.includes("application/json")) { setPostsError("Endpoint error."); return; }
-      const json = await res.json();
-      if (!res.ok) { setPostsError(json.error || "Load error."); return; }
-      setPosts(json.data || []);
-   async function loadPosts() {
+ async function loadPosts() {
   try {
     setLoadingPosts(true);
     setPostsError("");
 
-    const res = await fetch("/api/posts");
+    const res = await fetch("/api/posts", {
+      method: "GET",
+      cache: "no-store",
+    });
+
+    const ct = res.headers.get("content-type") || "";
+
+    if (!ct.includes("application/json")) {
+      setPostsError("Endpoint error.");
+      return;
+    }
+
     const json = await res.json();
 
     if (!res.ok) {
