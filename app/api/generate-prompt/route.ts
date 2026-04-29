@@ -10,10 +10,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { prompt } = await req.json();
+    const { prompt, outputLang = "en" } = await req.json();
     if (!prompt) {
       return NextResponse.json({ error: "No prompt provided" }, { status: 400 });
     }
+
+    const langInstruction =
+      outputLang === "nl"
+        ? "Write your entire response in Dutch (Nederlands)."
+        : outputLang === "pl"
+        ? "Write your entire response in Polish (Polski)."
+        : "Write your entire response in English.";
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -22,7 +29,7 @@ export async function POST(req: Request) {
       messages: [
         {
           role: "system",
-          content: `You are an elite marketing strategist and copywriter with 15 years of experience working with small and medium businesses. You write copy that converts — not copy that sounds good. Every piece of content you create is specific, human, and results-focused. You never write generic marketing fluff. You think like a top agency but write like a real person.`,
+          content: `You are an elite marketing strategist and copywriter with 15 years of experience working with small and medium businesses. You write copy that converts — not copy that sounds good. Every piece of content you create is specific, human, and results-focused. You never write generic marketing fluff. You think like a top agency but write like a real person. ${langInstruction}`,
         },
         { role: "user", content: prompt },
       ],
