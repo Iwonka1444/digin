@@ -1476,16 +1476,7 @@ const handleGenerateAiImage = async () => {
                 </div>
               )}
 
-{view === "promptlib" && (
-            <PromptLibrary
-              brandProfile={brandProfile}
-              onSaveDraft={(content) => {
-                setGeneratedPost(content);
-                handleNavigate("generator");
-              }}
-              lang={lang}
-            />
-          )}
+
 
               {brandDNA && !loadingAnalyze && (() => {
                 const modeKey = brandDNA.mode ?? "upgrade";
@@ -1564,7 +1555,16 @@ const handleGenerateAiImage = async () => {
               )}
             </div>
           )}
-
+ {view === "promptlib" && (
+            <PromptLibrary
+              brandProfile={brandProfile}
+              onSaveDraft={(content) => {
+                setGeneratedPost(content);
+                handleNavigate("generator");
+              }}
+              lang={lang}
+            />
+          )}
         </main>
       </div>
       <BottomNav />
