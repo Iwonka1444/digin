@@ -4,6 +4,7 @@ const tString = (val: string | string[]) =>
   Array.isArray(val) ? val[0] : val;
 
 import Link from "next/link";
+import PromptLibrary from "@/components/PromptLibrary";
 import { useEffect, useMemo, useState } from "react";
 
 type Lang = "en" | "pl" | "nl";
@@ -447,7 +448,7 @@ type GeneratedPost = {
   media_url?: string | null;
 };
 
-type ViewType = "dashboard" | "generator" | "calendar" | "engagement" | "drafts" | "brandlab";
+type ViewType = "dashboard" | "generator" | "calendar" | "engagement" | "drafts" | "brandlab" | "promptlib";
 
 type GeneratorForm = {
   platform: "Instagram" | "Facebook" | "LinkedIn";
@@ -947,6 +948,7 @@ const handleGenerateAiImage = async () => {
     { id: "engagement"as ViewType, label: t.nav_engagement, icon: "💬" },
     { id: "drafts"    as ViewType, label: t.nav_drafts, icon: "📝" },
     { id: "brandlab"  as ViewType, label: t.nav_brandlab, icon: "🧬" },
+{ id: "promptlib" as ViewType, label: "Prompt Library", icon: "📚" },
   ];
 
   const SidebarContent = () => (
@@ -1473,6 +1475,17 @@ const handleGenerateAiImage = async () => {
                   <p className="mt-3 text-sm text-emerald-700 font-medium">{t.lab_loading}</p>
                 </div>
               )}
+
+{view === "promptlib" && (
+            <PromptLibrary
+              brandProfile={brandProfile}
+              onSaveDraft={(content) => {
+                setGeneratedPost(content);
+                handleNavigate("generator");
+              }}
+              lang={lang}
+            />
+          )}
 
               {brandDNA && !loadingAnalyze && (() => {
                 const modeKey = brandDNA.mode ?? "upgrade";
